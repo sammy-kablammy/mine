@@ -1,12 +1,18 @@
 var canvas = document.getElementById("canv");
 var ctx = canvas.getContext("2d");
 var debugLabel = document.getElementById("debug");
+var rowsInput = document.getElementById("rows");
+var columnsInput = document.getElementById("columns");
+var bombsInput = document.getElementById("bombs");
 
-var numOfMines = 20;
-var gridColumnCount = 8;
+// these default values should be replaced immediately
+var numOfMines = 4;
+var gridColumnCount = 12;
 var gridRowCount = 8;
+
 var squareSize = 32;
 var textOffset = 7; // (in pixels) used to offset text (duh)
+var isGameOver = false;
 
 var mouseX = 0;
 var mouseY = 0;
@@ -16,30 +22,19 @@ var currentSquare = {
 }
 
 var grid = [];
-{ // initialize grid
-  for(var r = 0; r < 10; r++) {
+
+function initializeGrid() {
+  for(var r = 0; r < gridRowCount; r++) {
     grid[r] = [];
-    for(var c = 0; c < 10; c++) {
+    for(var c = 0; c < gridColumnCount; c++) {
       grid[r][c] = {
         val: 0,
-        hidden: false
+        hidden: true
       }
     }
   }
 }
-/*
-grid can be 0 (empty) or "mine" (mine)
-*/
 
-/* this is useful
-
-  for(var r = 0; r < 10; r++) {}
-    for(var c = 0; c < 10; c++) {
-
-    }
-  }
-
-*/
 
 // i dont like this repeating forever - just make it update whenever
 // then again, the debug function will probably be removed eventually anyway soo...
@@ -51,8 +46,8 @@ function debug() {
 function generateMines() {
   var minesGenerated = 0;
   while(minesGenerated < numOfMines) {
-    var mineRow = Math.floor(Math.random() * gridColumnCount);
-    var mineColumn = Math.floor(Math.random() * gridRowCount);
+    var mineRow = Math.floor(Math.random() * gridRowCount);
+    var mineColumn = Math.floor(Math.random() * gridColumnCount);
     if(grid[mineRow][mineColumn].val != "M") {
       grid[mineRow][mineColumn].val = "M";
       minesGenerated++;
@@ -63,14 +58,14 @@ function generateMines() {
 
 // figures out what number should be in each square based on # of mines near it
 function generateEmptySpaces() {
-  for(var r = 0; r < 10; r++) {
-    for(var c = 0; c < 10; c++) {
+  for(var r = 0; r < gridRowCount; r++) {
+    for(var c = 0; c < gridColumnCount; c++) {
       if(grid[r][c].val != "M") {
         // figure out what number goes in this square
         var mineCount = 0;
         for(var localR = -1; localR < 2; localR++) {
           for(var localC = -1; localC < 2; localC++) {
-            var isInBounds = (r + localR >= 0 && r + localR < gridColumnCount && c + localC >= 0 && c + localC < gridRowCount)
+            var isInBounds = (r + localR >= 0 && r + localR < gridRowCount && c + localC >= 0 && c + localC < gridColumnCount)
             if(isInBounds) {
               if(grid[r + localR][c + localC].val == "M") {
                 mineCount++;
@@ -140,8 +135,8 @@ function drawGrid() {
       }
       // regardless of visibility, add black outline around the square
       ctx.rect(c * canvas.width / gridColumnCount, r * canvas.height / gridRowCount, squareSize, squareSize);
-      // if it's a mine, make red THEN draw text
-      if(grid[r][c].val == "M") {
+      // if it's a mine (and not hidden of course), make red THEN draw text
+      if(!grid[r][c].hidden && grid[r][c].val == "M") {
         ctx.fillStyle = "red";
         ctx.fill();
         ctx.fillStyle = "black";
@@ -150,6 +145,21 @@ function drawGrid() {
       ctx.strokeStyle = "black";
       ctx.stroke();
       ctx.closePath();
+    }
+  }
+}
+
+function revealSquare(r, c) {
+  grid[r][c].hidden = false;
+  if(grid[r][c].val == 0) {
+    for(var localR = -1; localR < 2; localR++) {
+      for(var localC = -1; localC < 2; localC++) {
+        var isInBounds = (r + localR >= 0 && r + localR < gridRowCount && c + localC >= 0 && c + localC < gridColumnCount)
+        if(isInBounds && grid[r + localR][c + localC].hidden) {
+          // console.log("about to reveal " + (r + localR) + " " + (c + localC));
+          revealSquare(r + localR, c + localC);
+        }
+      }
     }
   }
 }
@@ -168,12 +178,23 @@ function clickFunc(e) {
       for(var c = 0; c < gridColumnCount; c++) {
         var withinX = mouseX > c * canvas.width / gridColumnCount && mouseX < (c * canvas.width / gridColumnCount) + squareSize;
         var withinY = mouseY > r * canvas.height / gridRowCount && mouseY < (r * canvas.height / gridRowCount) + squareSize;
-        if(withinX && withinY) {
+        if(withinX && withinY && !isGameOver) {
           currentSquare.x = c;
           currentSquare.y = r;
+
+          if(grid[currentSquare.y][currentSquare.x].val == "M") {
+            grid[currentSquare.y][currentSquare.x].hidden = false;
+            gameOver();
+          }
+          else {
+            revealSquare(r, c);
+          }
+
         }
       }
     }
+    checkIfWin();
+
   }
   drawGrid();
 }
@@ -184,13 +205,47 @@ function rightClickFunc(e) {
   e.preventDefault();
 }
 
-function resetGame() {
-  // make all the squares blank
-  for(var r = 0; r < 10; r++) {
-    for(var c = 0; c < 10; c++) {
-      grid[r][c].val = 0;
+function gameOver() {
+  isGameOver = true;
+  console.log("L Bozo   ".repeat(5));
+
+  for(var r = 0; r < gridRowCount; r++) {
+    for(var c = 0; c < gridColumnCount; c++) {
+      if(grid[r][c].val == "M") grid[r][c].hidden = false;
     }
   }
+
+}
+
+function checkIfWin() {
+  var numExposedSquares = 0;
+  for(var r = 0; r < gridRowCount; r++) {
+    for(var c = 0; c < gridColumnCount; c++) {
+      if(grid[r][c].val != "M" && !grid[r][c].hidden) {
+        numExposedSquares++;
+      }
+    }
+  }
+  if(numExposedSquares == (gridRowCount * gridColumnCount) - numOfMines) {
+    win();
+  }
+}
+
+function win() {
+  isGameOver = true;
+  console.log("you win bozo   ".repeat(5));
+}
+
+function resetGame() {
+
+  gridRowCount = rowsInput.value;
+  gridColumnCount = columnsInput.value;
+  numOfMines = bombsInput.value;
+
+  canvas.width = gridColumnCount * squareSize;
+  canvas.height = gridRowCount * squareSize;
+
+  initializeGrid();
 
   // do this too
   currentSquare = {
@@ -198,6 +253,9 @@ function resetGame() {
     y: -1
   }
 
+
+
+  isGameOver = false;
   console.log("clear stuff");
   console.log("\n\n\n\n\n\n\n\n\n\n\n");
   console.clear(); // why doesnt this work ?????

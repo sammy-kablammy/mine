@@ -15,3 +15,7 @@ button {
 p {
   font: 16px Arial;
 }
+
+input {
+  margin: 10px;
+}
