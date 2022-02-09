@@ -165,8 +165,7 @@ function clickFunc(e) {
         var withinX = mouseX > c * canvas.width / gridColumnCount && mouseX < (c * canvas.width / gridColumnCount) + squareSize;
         var withinY = mouseY > r * canvas.height / gridRowCount && mouseY < (r * canvas.height / gridRowCount) + squareSize;
         if(withinX && withinY && !isGameOver) {
-          console.log(r + " " + c);
-          if([r][c].val == "M") {
+          if(grid[r][c].val == "M") {
             gameOver();
           }
           else {
