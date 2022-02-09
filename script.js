@@ -1,32 +1,57 @@
 var canvas = document.getElementById("canv");
 var ctx = canvas.getContext("2d");
-var debugLabel = document.getElementById("debug");
 var rowsInput = document.getElementById("rows");
 var columnsInput = document.getElementById("columns");
 var bombsInput = document.getElementById("bombs");
 
-// these values are determined by html stuff
 var numOfMines;
 var gridColumnCount;
 var gridRowCount;
 
 var squareSize = 32;
-var textOffset = 7; // (in pixels) used to offset text (duh)
+var textOffset = 7; // come up with a dynamic way to determine this
 var isGameOver = false;
 var mouseX = 0;
 var mouseY = 0;
 var grid = [];
 
-function initializeGrid() {
-  for(var r = 0; r < gridRowCount; r++) {
-    grid[r] = [];
-    for(var c = 0; c < gridColumnCount; c++) {
-      grid[r][c] = {
-        val: 0,
-        hidden: true
+function resetGame() {
+  // these come from the html <input> elements
+  gridRowCount = rowsInput.value;
+  gridColumnCount = columnsInput.value;
+  numOfMines = bombsInput.value;
+
+  canvas.width = gridColumnCount * squareSize;
+  canvas.height = gridRowCount * squareSize;
+  isGameOver = false;
+  initializeGrid();
+  generateMines();
+  generateEmptySpaces();
+  drawGrid();
+}
+
+// handles pretty much all of the game logic
+function clickFunc(e) {
+  // make sure only left click is considered
+  if(e.button == 0) {
+    // check if the click happened on a button, not just anywhere
+    for(var r = 0; r < gridRowCount; r++) {
+      for(var c = 0; c < gridColumnCount; c++) {
+        var withinX = mouseX > c * canvas.width / gridColumnCount && mouseX < (c * canvas.width / gridColumnCount) + squareSize;
+        var withinY = mouseY > r * canvas.height / gridRowCount && mouseY < (r * canvas.height / gridRowCount) + squareSize;
+        if(withinX && withinY && !isGameOver) {
+          if(grid[r][c].val == "M") {
+            gameOver();
+          }
+          else {
+            revealSquare(r, c);
+          }
+        }
       }
     }
+    attemptWin();
   }
+  drawGrid();
 }
 
 function generateMines() {
@@ -66,7 +91,7 @@ function generateEmptySpaces() {
   }
 }
 
-// this needs to be updated to account for non-mine squares
+// actually converts the values of the grid array into visuals
 function drawGrid() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   for(var r = 0; r < gridRowCount; r++) {
@@ -135,6 +160,7 @@ function drawGrid() {
   }
 }
 
+// reveal the given square; also handles chains of zeroes being revealed
 function revealSquare(r, c) {
   grid[r][c].hidden = false;
   if(grid[r][c].val == 0) {
@@ -142,42 +168,11 @@ function revealSquare(r, c) {
       for(var localC = -1; localC < 2; localC++) {
         var isInBounds = (r + localR >= 0 && r + localR < gridRowCount && c + localC >= 0 && c + localC < gridColumnCount)
         if(isInBounds && grid[r + localR][c + localC].hidden) {
-          // console.log("about to reveal " + (r + localR) + " " + (c + localC));
           revealSquare(r + localR, c + localC);
         }
       }
     }
   }
-}
-
-function mouseMove(e) {
-  var rect = canvas.getBoundingClientRect();
-  mouseX = e.clientX - rect.left;
-  mouseY = e.clientY - rect.top;
-}
-
-function clickFunc(e) {
-  // make sure only left click is considered
-  if(e.button == 0) {
-    // check if the click happened on a button
-    for(var r = 0; r < gridRowCount; r++) {
-      for(var c = 0; c < gridColumnCount; c++) {
-        var withinX = mouseX > c * canvas.width / gridColumnCount && mouseX < (c * canvas.width / gridColumnCount) + squareSize;
-        var withinY = mouseY > r * canvas.height / gridRowCount && mouseY < (r * canvas.height / gridRowCount) + squareSize;
-        if(withinX && withinY && !isGameOver) {
-          if(grid[r][c].val == "M") {
-            gameOver();
-          }
-          else {
-            revealSquare(r, c);
-          }
-        }
-      }
-    }
-    checkIfWin();
-
-  }
-  drawGrid();
 }
 
 // make this do something
@@ -190,6 +185,7 @@ function gameOver() {
   isGameOver = true;
   console.log("L Bozo   ".repeat(5));
 
+  // reveal all the mines
   for(var r = 0; r < gridRowCount; r++) {
     for(var c = 0; c < gridColumnCount; c++) {
       if(grid[r][c].val == "M") grid[r][c].hidden = false;
@@ -198,7 +194,8 @@ function gameOver() {
 
 }
 
-function checkIfWin() {
+// attemptWin checks if the game has been won, then does the game-winny things
+function attemptWin() {
   var numExposedSquares = 0;
   for(var r = 0; r < gridRowCount; r++) {
     for(var c = 0; c < gridColumnCount; c++) {
@@ -208,32 +205,28 @@ function checkIfWin() {
     }
   }
   if(numExposedSquares == (gridRowCount * gridColumnCount) - numOfMines) {
-    win();
+    isGameOver = true;
+    console.log("you win bozo   ".repeat(5));
   }
 }
 
-function win() {
-  isGameOver = true;
-  console.log("you win bozo   ".repeat(5));
+function mouseMove(e) {
+  var rect = canvas.getBoundingClientRect();
+  mouseX = e.clientX - rect.left;
+  mouseY = e.clientY - rect.top;
 }
 
-function resetGame() {
-  gridRowCount = rowsInput.value;
-  gridColumnCount = columnsInput.value;
-  numOfMines = bombsInput.value;
 
-  canvas.width = gridColumnCount * squareSize;
-  canvas.height = gridRowCount * squareSize;
-
-  initializeGrid();
-
-  isGameOver = false;
-  console.log("resetting game");
-  console.log("\n\n");
-  console.clear(); // why doesnt this work ?????
-  generateMines();
-  generateEmptySpaces();
-  drawGrid();
+function initializeGrid() {
+  for(var r = 0; r < gridRowCount; r++) {
+    grid[r] = [];
+    for(var c = 0; c < gridColumnCount; c++) {
+      grid[r][c] = {
+        val: 0,
+        hidden: true
+      }
+    }
+  }
 }
 
 canvas.addEventListener("mousemove", mouseMove);
