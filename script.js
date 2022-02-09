@@ -5,22 +5,16 @@ var rowsInput = document.getElementById("rows");
 var columnsInput = document.getElementById("columns");
 var bombsInput = document.getElementById("bombs");
 
-// these default values should be replaced immediately
-var numOfMines = 4;
-var gridColumnCount = 12;
-var gridRowCount = 8;
+// these values are determined by html stuff
+var numOfMines;
+var gridColumnCount;
+var gridRowCount;
 
 var squareSize = 32;
 var textOffset = 7; // (in pixels) used to offset text (duh)
 var isGameOver = false;
-
 var mouseX = 0;
 var mouseY = 0;
-var currentSquare = {
-  x: -1,
-  y: -1
-}
-
 var grid = [];
 
 function initializeGrid() {
@@ -35,14 +29,6 @@ function initializeGrid() {
   }
 }
 
-
-// i dont like this repeating forever - just make it update whenever
-// then again, the debug function will probably be removed eventually anyway soo...
-function debug() {
-  debugLabel.innerHTML = "row: " + currentSquare.y + " column: " + currentSquare.x;
-  requestAnimationFrame(debug);
-}
-
 function generateMines() {
   var minesGenerated = 0;
   while(minesGenerated < numOfMines) {
@@ -51,7 +37,7 @@ function generateMines() {
     if(grid[mineRow][mineColumn].val != "M") {
       grid[mineRow][mineColumn].val = "M";
       minesGenerated++;
-      console.log("mine generated at row: " + mineRow + " and column: " + mineColumn);
+      // console.log("mine generated at row: " + mineRow + " and column: " + mineColumn);
     }
   }
 }
@@ -179,17 +165,13 @@ function clickFunc(e) {
         var withinX = mouseX > c * canvas.width / gridColumnCount && mouseX < (c * canvas.width / gridColumnCount) + squareSize;
         var withinY = mouseY > r * canvas.height / gridRowCount && mouseY < (r * canvas.height / gridRowCount) + squareSize;
         if(withinX && withinY && !isGameOver) {
-          currentSquare.x = c;
-          currentSquare.y = r;
-
-          if(grid[currentSquare.y][currentSquare.x].val == "M") {
-            grid[currentSquare.y][currentSquare.x].hidden = false;
+          console.log(r + " " + c);
+          if([r][c].val == "M") {
             gameOver();
           }
           else {
             revealSquare(r, c);
           }
-
         }
       }
     }
@@ -237,7 +219,6 @@ function win() {
 }
 
 function resetGame() {
-
   gridRowCount = rowsInput.value;
   gridColumnCount = columnsInput.value;
   numOfMines = bombsInput.value;
@@ -247,25 +228,16 @@ function resetGame() {
 
   initializeGrid();
 
-  // do this too
-  currentSquare = {
-    x: -1,
-    y: -1
-  }
-
-
-
   isGameOver = false;
-  console.log("clear stuff");
-  console.log("\n\n\n\n\n\n\n\n\n\n\n");
+  console.log("resetting game");
+  console.log("\n\n");
   console.clear(); // why doesnt this work ?????
   generateMines();
-  generateEmptySpaces()
+  generateEmptySpaces();
   drawGrid();
 }
 
 canvas.addEventListener("mousemove", mouseMove);
 canvas.addEventListener("click", clickFunc);
 canvas.addEventListener("contextmenu", rightClickFunc);
-debug();
 resetGame();
