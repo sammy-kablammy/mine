@@ -1,4 +1,16 @@
+html {
+  background-color: lightgrey;
+}
+
 canvas {
   background-color: #eeeeee;
-  margin: 50px;
+  margin-left: 50px;
+}
+
+button {
+  font: 24px Arial;
+}
+
+p {
+  font: 16px Arial;
 }
