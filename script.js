@@ -220,14 +220,13 @@ function attemptWin() {
   }
 }
 
-function placeFlag() {
+function placeFlag(r, c) {
   clearInterval(interval);
-  var position = getIndexAtMouseCoords();
-  if(position != null && !isGameOver && gameStarted && !grid[position.row][position.column].flagged && grid[position.row][position.column].hidden) {
-    grid[position.row][position.column].flagged = true;
+  if(!isGameOver && gameStarted && !grid[r][c].flagged && grid[r][c].hidden) {
+    grid[r][c].flagged = true;
   }
-  else if(position != null && !isGameOver && grid[position.row][position.column].flagged) {
-    grid[position.row][position.column].flagged = false;
+  else if(!isGameOver && grid[r][c].flagged) {
+    grid[r][c].flagged = false;
   }
   drawGrid();
 }
@@ -256,10 +255,17 @@ function mouseMove(e) {
 
 function mouseDownFunc(e) {
   if(e.button == 2) {
-    placeFlag();
+    var position = getIndexAtMouseCoords();
+    if(position != null) {
+      placeFlag(position.row, position.column);
+    }
   }
   if(interval == -1 && e.button == 0) {
-    interval = setInterval(placeFlag, 400);
+    var position = getIndexAtMouseCoords();
+    if(position != null) {
+      interval = setInterval(placeFlag, 400, position.row, position.column);
+    }
+    
   }
 }
 
