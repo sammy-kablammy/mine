@@ -222,6 +222,7 @@ function attemptWin() {
 
 function placeFlag(r, c) {
   clearInterval(interval);
+  interval = -1;
   if(!isGameOver && gameStarted && !grid[r][c].flagged && grid[r][c].hidden) {
     grid[r][c].flagged = true;
   }
@@ -265,15 +266,16 @@ function mouseDownFunc(e) {
     if(position != null) {
       interval = setInterval(placeFlag, 400, position.row, position.column);
     }
-    
   }
 }
 
 function mouseUpFunc(e) {
-  if(interval != -1 && e.button == 0) {
-    click(e);
-    clearInterval(interval);
-    interval = -1;
+  if(e.button == 0) {
+    if(interval != -1) {
+      click(e);
+      clearInterval(interval);
+      interval = -1;
+    }
   }
 }
 
