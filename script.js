@@ -14,6 +14,8 @@ var mouseX = 0;
 var mouseY = 0;
 var grid = [];
 
+var interval = -1;
+
 function resetGame() {
   // these come from the html <input> elements
   gridRowCount = rowsInput.value;
@@ -34,11 +36,12 @@ function clickFunc(e) {
   // make sure only left click is considered
   if(e.button == 0) {
     // check if the click happened on a button, not just anywhere
+    // also, encapsulate some of this stuff so it doesn't repeat in the right click function
     for(var r = 0; r < gridRowCount; r++) {
       for(var c = 0; c < gridColumnCount; c++) {
         var withinX = mouseX > c * canvas.width / gridColumnCount && mouseX < (c * canvas.width / gridColumnCount) + squareSize;
         var withinY = mouseY > r * canvas.height / gridRowCount && mouseY < (r * canvas.height / gridRowCount) + squareSize;
-        if(withinX && withinY && !isGameOver) {
+        if(withinX && withinY && !isGameOver && grid[r][c].flagged == false) {
           if(grid[r][c].val == "M") {
             gameOver();
           }
@@ -61,7 +64,7 @@ function generateMines() {
     if(grid[mineRow][mineColumn].val != "M") {
       grid[mineRow][mineColumn].val = "M";
       minesGenerated++;
-      console.log("mine generated at row: " + mineRow + " and column: " + mineColumn);
+      // console.log("mine generated at row: " + mineRow + " and column: " + mineColumn);
     }
   }
 }
@@ -98,12 +101,19 @@ function drawGrid() {
       ctx.beginPath();
       // draw the covered squares
       if(grid[r][c].hidden == true) {
+        // draw a blank grey square
         ctx.rect(c * canvas.width / gridColumnCount, r * canvas.height / gridRowCount, squareSize, squareSize);
         ctx.fillStyle = "grey";
         ctx.fill();
+        // draw the flags
+        if(grid[r][c].flagged) {
+          var textOffset = (squareSize - ctx.measureText(grid[r][c].val).width) / 2;
+          ctx.fillStyle = "pink";
+          ctx.fillText("F", (c * canvas.width / gridColumnCount) + textOffset, (r * canvas.height / gridRowCount) + textOffset);
+        }
       }
       // draw the uncovered squares
-      else { // hidden is false
+      else if(!grid[r][c].hidden && !grid[r][c].flagged) {
         ctx.font = "18px Arial";
         ctx.textBaseline = "top";
         // figure out what color the text should be
@@ -146,8 +156,8 @@ function drawGrid() {
       }
       // regardless of visibility, add black outline around the square
       ctx.rect(c * canvas.width / gridColumnCount, r * canvas.height / gridRowCount, squareSize, squareSize);
-      // if it's a mine (and not hidden of course), make red THEN draw text
-      if(!grid[r][c].hidden && grid[r][c].val == "M") {
+      // if it's a mine (and not hidden and flagged of course), make red THEN draw text
+      if(!grid[r][c].hidden && !grid[r][c].flagged && grid[r][c].val == "M") {
         ctx.fillStyle = "red";
         ctx.fill();
         ctx.fillStyle = "black";
@@ -211,10 +221,41 @@ function attemptWin() {
   }
 }
 
+function placeFlag() {
+  clearInterval(interval);
+
+  // check if the click happened on a button, not just anywhere
+  for(var r = 0; r < gridRowCount; r++) {
+    for(var c = 0; c < gridColumnCount; c++) {
+      var withinX = mouseX > c * canvas.width / gridColumnCount && mouseX < (c * canvas.width / gridColumnCount) + squareSize;
+      var withinY = mouseY > r * canvas.height / gridRowCount && mouseY < (r * canvas.height / gridRowCount) + squareSize;
+      if(withinX && withinY && !isGameOver && grid[r][c].flagged == false && grid[r][c].hidden) {
+        grid[r][c].flagged = true;
+      }
+    }
+  }
+  drawGrid();
+}
+
 function mouseMove(e) {
   var rect = canvas.getBoundingClientRect();
   mouseX = e.clientX - rect.left;
   mouseY = e.clientY - rect.top;
+}
+
+function mouseDownFunc(e) {
+  if(interval == -1) {
+    interval = setInterval(placeFlag, 400);
+  }
+}
+
+function mouseUpFunc(e) {
+  if(interval != -1) {
+    clickFunc(e);
+    clearInterval(interval);
+    interval = -1;
+  }
+
 }
 
 function initializeGrid() {
@@ -223,13 +264,16 @@ function initializeGrid() {
     for(var c = 0; c < gridColumnCount; c++) {
       grid[r][c] = {
         val: 0,
-        hidden: true
+        hidden: true,
+        flagged: false
       }
     }
   }
 }
 
 canvas.addEventListener("mousemove", mouseMove);
-canvas.addEventListener("click", clickFunc);
+// canvas.addEventListener("click", clickFunc);
+canvas.addEventListener("mousedown", mouseDownFunc);
+canvas.addEventListener("mouseup", mouseUpFunc);
 canvas.addEventListener("contextmenu", rightClickFunc);
 resetGame();
