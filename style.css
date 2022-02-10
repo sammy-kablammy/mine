@@ -13,9 +13,12 @@ button {
 }
 
 p {
-  font: 16px Arial;
+  font: 24px Arial;
 }
 
 input {
+  font: 16px Arial;
   margin: 10px;
+  width: 32px;
+  margin-left: 60px;
 }

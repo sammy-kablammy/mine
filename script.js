@@ -9,7 +9,6 @@ var gridColumnCount;
 var gridRowCount;
 
 var squareSize = 32;
-var textOffset = 7; // come up with a dynamic way to determine this
 var isGameOver = false;
 var mouseX = 0;
 var mouseY = 0;
@@ -30,7 +29,7 @@ function resetGame() {
   drawGrid();
 }
 
-// handles pretty much all of the game logic
+// clickFunc handles pretty much all of the game logic
 function clickFunc(e) {
   // make sure only left click is considered
   if(e.button == 0) {
@@ -62,7 +61,7 @@ function generateMines() {
     if(grid[mineRow][mineColumn].val != "M") {
       grid[mineRow][mineColumn].val = "M";
       minesGenerated++;
-      // console.log("mine generated at row: " + mineRow + " and column: " + mineColumn);
+      console.log("mine generated at row: " + mineRow + " and column: " + mineColumn);
     }
   }
 }
@@ -140,6 +139,7 @@ function drawGrid() {
           default:
           color = "purple"; // should never happen
         }
+        var textOffset = (squareSize - ctx.measureText(grid[r][c].val).width) / 2;
         ctx.fillStyle = color;
         ctx.fillText(grid[r][c].val, (c * canvas.width / gridColumnCount) + textOffset, (r * canvas.height / gridRowCount) + textOffset);
         ctx.fill();
@@ -163,13 +163,16 @@ function drawGrid() {
 // reveal the given square; also handles chains of zeroes being revealed
 function revealSquare(r, c) {
   grid[r][c].hidden = false;
-  if(grid[r][c].val == 0) {
-    for(var localR = -1; localR < 2; localR++) {
-      for(var localC = -1; localC < 2; localC++) {
-        var isInBounds = (r + localR >= 0 && r + localR < gridRowCount && c + localC >= 0 && c + localC < gridColumnCount)
-        if(isInBounds && grid[r + localR][c + localC].hidden) {
-          revealSquare(r + localR, c + localC);
-        }
+  for(var localR = -1; localR < 2; localR++) {
+    for(var localC = -1; localC < 2; localC++) {
+      var isInBounds = (r + localR >= 0 && r + localR < gridRowCount && c + localC >= 0 && c + localC < gridColumnCount)
+      // if the singled square that called the function is zero, reveal everything around it
+      if(grid[r][c].val == 0 && isInBounds && grid[r + localR][c + localC].hidden) {
+        revealSquare(r + localR, c + localC);
+      }
+      // if one of the "8 squares around me" is zero, reveal that square
+      else if(isInBounds && grid[r + localR][c + localC].val == 0 && grid[r + localR][c + localC].hidden) {
+        revealSquare(r + localR, c + localC);
       }
     }
   }
@@ -184,14 +187,12 @@ function rightClickFunc(e) {
 function gameOver() {
   isGameOver = true;
   console.log("L Bozo   ".repeat(5));
-
   // reveal all the mines
   for(var r = 0; r < gridRowCount; r++) {
     for(var c = 0; c < gridColumnCount; c++) {
       if(grid[r][c].val == "M") grid[r][c].hidden = false;
     }
   }
-
 }
 
 // attemptWin checks if the game has been won, then does the game-winny things
@@ -215,7 +216,6 @@ function mouseMove(e) {
   mouseX = e.clientX - rect.left;
   mouseY = e.clientY - rect.top;
 }
-
 
 function initializeGrid() {
   for(var r = 0; r < gridRowCount; r++) {
