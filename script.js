@@ -3,18 +3,18 @@ var ctx = canvas.getContext("2d");
 var rowsInput = document.getElementById("rows");
 var columnsInput = document.getElementById("columns");
 var bombsInput = document.getElementById("bombs");
+var title = document.getElementById("title");
 
 var numOfMines;
 var gridColumnCount;
 var gridRowCount;
-
 var squareSize = 32;
-var isGameOver = false;
 var mouseX = 0;
 var mouseY = 0;
-var grid = [];
-
+var grid = []; // holds all the mines and numbers and stuff
 var interval = -1;
+var isGameOver = false;
+var gameStarted = false; // changes when the first move has been made
 
 function resetGame() {
   // these come from the html <input> elements
@@ -24,31 +24,26 @@ function resetGame() {
 
   canvas.width = gridColumnCount * squareSize;
   canvas.height = gridRowCount * squareSize;
+  gameStarted = false;
   isGameOver = false;
   initializeGrid();
   generateMines();
   generateEmptySpaces();
   drawGrid();
+  title.innerHTML = "mine sweep 💣💯";
 }
 
-// clickFunc handles pretty much all of the game logic
-function clickFunc(e) {
-  // make sure only left click is considered
+// click handles pretty much all of the game logic
+function click(e) {
   if(e.button == 0) {
-    // check if the click happened on a button, not just anywhere
-    // also, encapsulate some of this stuff so it doesn't repeat in the right click function
-    for(var r = 0; r < gridRowCount; r++) {
-      for(var c = 0; c < gridColumnCount; c++) {
-        var withinX = mouseX > c * canvas.width / gridColumnCount && mouseX < (c * canvas.width / gridColumnCount) + squareSize;
-        var withinY = mouseY > r * canvas.height / gridRowCount && mouseY < (r * canvas.height / gridRowCount) + squareSize;
-        if(withinX && withinY && !isGameOver && grid[r][c].flagged == false) {
-          if(grid[r][c].val == "M") {
-            gameOver();
-          }
-          else {
-            revealSquare(r, c);
-          }
-        }
+    var position = getIndexAtMouseCoords();
+    if(position != null && !isGameOver && !grid[position.row][position.column].flagged) {
+      if(grid[position.row][position.column].val == "M") {
+        gameOver();
+      }
+      else {
+        revealSquare(position.row, position.column);
+        if(!gameStarted) gameStarted = true;
       }
     }
     attemptWin();
@@ -64,7 +59,6 @@ function generateMines() {
     if(grid[mineRow][mineColumn].val != "M") {
       grid[mineRow][mineColumn].val = "M";
       minesGenerated++;
-      // console.log("mine generated at row: " + mineRow + " and column: " + mineColumn);
     }
   }
 }
@@ -176,7 +170,7 @@ function revealSquare(r, c) {
   for(var localR = -1; localR < 2; localR++) {
     for(var localC = -1; localC < 2; localC++) {
       var isInBounds = (r + localR >= 0 && r + localR < gridRowCount && c + localC >= 0 && c + localC < gridColumnCount)
-      // if the singled square that called the function is zero, reveal everything around it
+      // if the single square that called the function is zero, reveal everything around it
       if(grid[r][c].val == 0 && isInBounds && grid[r + localR][c + localC].hidden) {
         revealSquare(r + localR, c + localC);
       }
@@ -188,19 +182,16 @@ function revealSquare(r, c) {
   }
 }
 
-// make this do something
-function rightClickFunc(e) {
-  // console.log("right click   x" + mouseX + "   y" + mouseY);
-  e.preventDefault();
-}
-
 function gameOver() {
   isGameOver = true;
-  console.log("L Bozo   ".repeat(5));
+  title.innerHTML = "L bozo you lose";
   // reveal all the mines
   for(var r = 0; r < gridRowCount; r++) {
     for(var c = 0; c < gridColumnCount; c++) {
-      if(grid[r][c].val == "M") grid[r][c].hidden = false;
+      if(grid[r][c].val == "M") {
+        grid[r][c].hidden = false;
+        grid[r][c].flagged = false;
+      }
     }
   }
 }
@@ -217,24 +208,44 @@ function attemptWin() {
   }
   if(numExposedSquares == (gridRowCount * gridColumnCount) - numOfMines) {
     isGameOver = true;
-    console.log("you win bozo   ".repeat(5));
+    title.innerHTML = "winner winner chicken dinner";
+    // reveal all the flags
+    for(var r = 0; r < gridRowCount; r++) {
+      for(var c = 0; c < gridColumnCount; c++) {
+        if(grid[r][c].val == "M") {
+          grid[r][c].flagged = true;
+        }
+      }
+    }
   }
 }
 
 function placeFlag() {
   clearInterval(interval);
+  var position = getIndexAtMouseCoords();
+  if(position != null && !isGameOver && gameStarted && !grid[position.row][position.column].flagged && grid[position.row][position.column].hidden) {
+    grid[position.row][position.column].flagged = true;
+  }
+  else if(position != null && !isGameOver && grid[position.row][position.column].flagged) {
+    grid[position.row][position.column].flagged = false;
+  }
+  drawGrid();
+}
 
-  // check if the click happened on a button, not just anywhere
+// converts mouse position in pixels to the index values in the 2D array
+function getIndexAtMouseCoords() {
   for(var r = 0; r < gridRowCount; r++) {
     for(var c = 0; c < gridColumnCount; c++) {
       var withinX = mouseX > c * canvas.width / gridColumnCount && mouseX < (c * canvas.width / gridColumnCount) + squareSize;
       var withinY = mouseY > r * canvas.height / gridRowCount && mouseY < (r * canvas.height / gridRowCount) + squareSize;
-      if(withinX && withinY && !isGameOver && grid[r][c].flagged == false && grid[r][c].hidden) {
-        grid[r][c].flagged = true;
+      if(withinX && withinY) {
+        return {
+          row: r,
+          column: c
+        }
       }
     }
   }
-  drawGrid();
 }
 
 function mouseMove(e) {
@@ -244,18 +255,26 @@ function mouseMove(e) {
 }
 
 function mouseDownFunc(e) {
-  if(interval == -1) {
+  if(e.button == 2) {
+    placeFlag();
+  }
+  if(interval == -1 && e.button == 0) {
     interval = setInterval(placeFlag, 400);
   }
 }
 
 function mouseUpFunc(e) {
-  if(interval != -1) {
-    clickFunc(e);
+  if(interval != -1 && e.button == 0) {
+    click(e);
     clearInterval(interval);
     interval = -1;
   }
+}
 
+// only purpose of this is to prevent right click menu
+function rightClickFunc(e) {
+  // i think the reason this can't happen in the mouseDownFunc is because click events are cancellable while mousedown events are not ?
+  if(e.button == 2) e.preventDefault();
 }
 
 function initializeGrid() {
@@ -271,9 +290,8 @@ function initializeGrid() {
   }
 }
 
+document.addEventListener("contextmenu", rightClickFunc);
 canvas.addEventListener("mousemove", mouseMove);
-// canvas.addEventListener("click", clickFunc);
 canvas.addEventListener("mousedown", mouseDownFunc);
 canvas.addEventListener("mouseup", mouseUpFunc);
-canvas.addEventListener("contextmenu", rightClickFunc);
 resetGame();
