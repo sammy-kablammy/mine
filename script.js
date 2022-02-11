@@ -12,6 +12,7 @@ var squareSize = 32;
 var mouseX = 0;
 var mouseY = 0;
 var grid = []; // holds all the mines and numbers and stuff
+var numFlags = 0;
 var interval = -1;
 var isGameOver = false;
 var gameStarted = false; // changes when the first move has been made
@@ -38,50 +39,43 @@ function click(e) {
   if(e.button == 0) {
     var position = getIndexAtMouseCoords();
     if(position != null && !isGameOver && !grid[position.row][position.column].flagged) {
-      if(grid[position.row][position.column].val == "M") {
-        gameOver();
-      }
-      else {
-        revealSquare(position.row, position.column);
-        if(!gameStarted) gameStarted = true;
-      }
+      if(grid[position.row][position.column].val == "M") gameOver();
+      else revealSquare(position.row, position.column);
+      if(!gameStarted) gameStarted = true;
     }
     attemptWin();
   }
   drawGrid();
 }
 
-function generateMines() {
-  var minesGenerated = 0;
-  while(minesGenerated < numOfMines) {
-    var mineRow = Math.floor(Math.random() * gridRowCount);
-    var mineColumn = Math.floor(Math.random() * gridColumnCount);
-    if(grid[mineRow][mineColumn].val != "M") {
-      grid[mineRow][mineColumn].val = "M";
-      minesGenerated++;
-    }
-  }
-}
-
-// figures out what number should be in each square based on # of mines near it
-function generateEmptySpaces() {
-  for(var r = 0; r < gridRowCount; r++) {
-    for(var c = 0; c < gridColumnCount; c++) {
-      if(grid[r][c].val != "M") {
-        // figure out what number goes in this square
-        var mineCount = 0;
-        for(var localR = -1; localR < 2; localR++) {
-          for(var localC = -1; localC < 2; localC++) {
-            var isInBounds = (r + localR >= 0 && r + localR < gridRowCount && c + localC >= 0 && c + localC < gridColumnCount)
-            if(isInBounds) {
-              if(grid[r + localR][c + localC].val == "M") {
-                mineCount++;
-              }
-            }
+// reveal the given square; also handles chains of zeroes being revealed
+function revealSquare(r, c) {
+  grid[r][c].hidden = false;
+  // handles clicking on a number to reveal the non-flags around it
+  if(!grid[r][c].flagged && grid[r][c].val != "M") {
+    if(getNearbyMineCount(r, c) <= getNearbyFlagCount(r, c)) {
+      // reveal 8 around r, c
+      for(var localR = -1; localR < 2; localR++) {
+        for(var localC = -1; localC < 2; localC++) {
+          var isInBounds = (r + localR >= 0 && r + localR < gridRowCount && c + localC >= 0 && c + localC < gridColumnCount)
+          if(isInBounds && grid[r + localR][c + localC].hidden && !grid[r + localR][c + localC].flagged) {
+            revealSquare(r + localR, c + localC);
           }
         }
-        // now, put that number in the square
-        grid[r][c].val = mineCount;
+      }
+    }
+  }
+  // handles zero chain shenanigans
+  for(var localR = -1; localR < 2; localR++) {
+    for(var localC = -1; localC < 2; localC++) {
+      var isInBounds = (r + localR >= 0 && r + localR < gridRowCount && c + localC >= 0 && c + localC < gridColumnCount)
+      // if r, c is zero, reveal everything around it
+      if(grid[r][c].val == 0 && isInBounds && grid[r + localR][c + localC].hidden) {
+        revealSquare(r + localR, c + localC);
+      }
+      // if one of the "8 squares around me" is zero, reveal that square
+      else if(isInBounds && grid[r + localR][c + localC].val == 0 && grid[r + localR][c + localC].hidden) {
+        revealSquare(r + localR, c + localC);
       }
     }
   }
@@ -164,19 +158,25 @@ function drawGrid() {
   }
 }
 
-// reveal the given square; also handles chains of zeroes being revealed
-function revealSquare(r, c) {
-  grid[r][c].hidden = false;
-  for(var localR = -1; localR < 2; localR++) {
-    for(var localC = -1; localC < 2; localC++) {
-      var isInBounds = (r + localR >= 0 && r + localR < gridRowCount && c + localC >= 0 && c + localC < gridColumnCount)
-      // if the single square that called the function is zero, reveal everything around it
-      if(grid[r][c].val == 0 && isInBounds && grid[r + localR][c + localC].hidden) {
-        revealSquare(r + localR, c + localC);
-      }
-      // if one of the "8 squares around me" is zero, reveal that square
-      else if(isInBounds && grid[r + localR][c + localC].val == 0 && grid[r + localR][c + localC].hidden) {
-        revealSquare(r + localR, c + localC);
+function generateMines() {
+  var minesGenerated = 0;
+  while(minesGenerated < numOfMines) {
+    var mineRow = Math.floor(Math.random() * gridRowCount);
+    var mineColumn = Math.floor(Math.random() * gridColumnCount);
+    if(grid[mineRow][mineColumn].val != "M") {
+      grid[mineRow][mineColumn].val = "M";
+      minesGenerated++;
+    }
+  }
+}
+
+// figures out what number should be in each square based on # of mines near it
+function generateEmptySpaces() {
+  for(var r = 0; r < gridRowCount; r++) {
+    for(var c = 0; c < gridColumnCount; c++) {
+      if(grid[r][c].val != "M") {
+        var mineCount = getNearbyMineCount(r, c);
+        grid[r][c].val = mineCount;
       }
     }
   }
@@ -225,9 +225,11 @@ function placeFlag(r, c) {
   interval = -1;
   if(!isGameOver && gameStarted && !grid[r][c].flagged && grid[r][c].hidden) {
     grid[r][c].flagged = true;
+    numFlags++;
   }
   else if(!isGameOver && grid[r][c].flagged) {
     grid[r][c].flagged = false;
+    numFlags--;
   }
   drawGrid();
 }
@@ -248,10 +250,35 @@ function getIndexAtMouseCoords() {
   }
 }
 
-function mouseMove(e) {
-  var rect = canvas.getBoundingClientRect();
-  mouseX = e.clientX - rect.left;
-  mouseY = e.clientY - rect.top;
+// returns number of mines in 8 blocks around r, c
+function getNearbyMineCount(r, c) {
+  var mineCount = 0;
+  for(var localR = -1; localR < 2; localR++) {
+    for(var localC = -1; localC < 2; localC++) {
+      var isInBounds = (r + localR >= 0 && r + localR < gridRowCount && c + localC >= 0 && c + localC < gridColumnCount)
+      if(isInBounds) {
+        if(grid[r + localR][c + localC].val == "M") {
+          mineCount++;
+        }
+      }
+    }
+  }
+  return mineCount;
+}
+// returns number of flags in 8 blocks around r, c
+function getNearbyFlagCount(r, c) {
+  var flagCount = 0;
+  for(var localR = -1; localR < 2; localR++) {
+    for(var localC = -1; localC < 2; localC++) {
+      var isInBounds = (r + localR >= 0 && r + localR < gridRowCount && c + localC >= 0 && c + localC < gridColumnCount)
+      if(isInBounds) {
+        if(grid[r + localR][c + localC].flagged) {
+          flagCount++;
+        }
+      }
+    }
+  }
+  return flagCount;
 }
 
 function mouseDownFunc(e) {
@@ -283,6 +310,12 @@ function mouseUpFunc(e) {
 function rightClickFunc(e) {
   // i think the reason this can't happen in the mouseDownFunc is because click events are cancellable while mousedown events are not ?
   if(e.button == 2) e.preventDefault();
+}
+
+function mouseMove(e) {
+  var rect = canvas.getBoundingClientRect();
+  mouseX = e.clientX - rect.left;
+  mouseY = e.clientY - rect.top;
 }
 
 function initializeGrid() {
