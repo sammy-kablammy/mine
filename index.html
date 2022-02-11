@@ -11,7 +11,6 @@
   <body>
     <h1 id="title">mine sweep 💣💯</h1>
 
-
     <div class="left">
       <p id="flags">Mines Left: 12</p>
       <h3>rows: </h3>
@@ -25,11 +24,17 @@
       <br>
       <button id="reset" onclick="resetGame()">reset game</button>
     </div>
+    <canvas id="canv" width=256 height=256></canvas>
 
     <div class="right">
-      <canvas id="canv" width=256 height=256></canvas>
+      <h3><b>things to fix or maybe add</b></h3>
+      <ul>
+        <li>make sure you can't add more mines than there are squares (also, check that input is a whole number</li>
+        <li>timer and like score and stuff</li>
+        <li>touchscreen input</li>
+        <li>difficulty presets?</li>
+      </ul>
     </div>
-
     
     <script src="script.js"></script>
   </body>

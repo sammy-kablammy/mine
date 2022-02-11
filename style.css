@@ -31,3 +31,8 @@ h3 {
   float: left;
   width: 180px;
 }
+
+.right {
+  float: right;
+  width: 700px;
+}
