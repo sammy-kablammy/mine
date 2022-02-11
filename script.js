@@ -4,6 +4,7 @@ var rowsInput = document.getElementById("rows");
 var columnsInput = document.getElementById("columns");
 var bombsInput = document.getElementById("bombs");
 var title = document.getElementById("title");
+var flags = document.getElementById("flags");
 
 var numOfMines;
 var gridColumnCount;
@@ -23,6 +24,7 @@ function resetGame() {
   gridColumnCount = columnsInput.value;
   numOfMines = bombsInput.value;
 
+  flags.innerHTML = "Mines Left: " + (numOfMines - numFlags);
   canvas.width = gridColumnCount * squareSize;
   canvas.height = gridRowCount * squareSize;
   gameStarted = false;
@@ -185,6 +187,7 @@ function generateEmptySpaces() {
 function gameOver() {
   isGameOver = true;
   title.innerHTML = "L bozo you lose";
+  flags.innerHTML = "Mines Left: 0";
   // reveal all the mines
   for(var r = 0; r < gridRowCount; r++) {
     for(var c = 0; c < gridColumnCount; c++) {
@@ -232,6 +235,7 @@ function placeFlag(r, c) {
     numFlags--;
   }
   drawGrid();
+  flags.innerHTML = "Mines Left: " + (numOfMines - numFlags);
 }
 
 // converts mouse position in pixels to the index values in the 2D array
@@ -267,18 +271,18 @@ function getNearbyMineCount(r, c) {
 }
 // returns number of flags in 8 blocks around r, c
 function getNearbyFlagCount(r, c) {
-  var flagCount = 0;
+  var localFlagCount = 0;
   for(var localR = -1; localR < 2; localR++) {
     for(var localC = -1; localC < 2; localC++) {
       var isInBounds = (r + localR >= 0 && r + localR < gridRowCount && c + localC >= 0 && c + localC < gridColumnCount)
       if(isInBounds) {
         if(grid[r + localR][c + localC].flagged) {
-          flagCount++;
+          localFlagCount++;
         }
       }
     }
   }
-  return flagCount;
+  return localFlagCount;
 }
 
 function mouseDownFunc(e) {

@@ -1,24 +1,33 @@
 html {
   background-color: lightgrey;
+  font: 24px Arial;
 }
 
 canvas {
+  display: inline;
   background-color: #eeeeee;
-  margin-left: 50px;
   border: 1px solid black;
-}
-
-button {
-  font: 24px Arial;
-}
-
-p {
-  font: 24px Arial;
 }
 
 input {
   font: 16px Arial;
-  margin: 10px;
   width: 32px;
-  margin-left: 60px;
+  margin-top: 8px;
+  margin-bottom: 8px;
+}
+
+button {
+  margin-top: 16px;
+  font: 28px Arial;
+}
+
+h3 {
+  font: 24px Arial;
+  display: inline;
+  margin-right: 5px;
+}
+
+.left {
+  float: left;
+  width: 180px;
 }

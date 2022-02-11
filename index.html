@@ -9,14 +9,27 @@
   </head>
 
   <body>
-    <p id="title">mine sweep 💣💯</p>
-    <canvas id="canv" width=256 height=256></canvas>
-    <br>
-    <input id="rows" value="10">rows</input>
-    <input id="columns" value="10">columns</input>
-    <input id="bombs" value="8">bombs</input>
-    <br>
-    <button id="reset" onclick="resetGame()">reset game</button>
+    <h1 id="title">mine sweep 💣💯</h1>
+
+
+    <div class="left">
+      <p id="flags">Mines Left: 12</p>
+      <h3>rows: </h3>
+      <input id="rows" value="10"></input>
+      <br>
+      <h3>columns: </h3>
+      <input id="columns" value="10"></input>
+      <br>
+      <h3>mines: </h3>
+      <input id="bombs" value="12"></input>
+      <br>
+      <button id="reset" onclick="resetGame()">reset game</button>
+    </div>
+
+    <div class="right">
+      <canvas id="canv" width=256 height=256></canvas>
+    </div>
+
     
     <script src="script.js"></script>
   </body>
