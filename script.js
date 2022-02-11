@@ -24,6 +24,7 @@ function resetGame() {
   gridColumnCount = columnsInput.value;
   numOfMines = bombsInput.value;
 
+  numFlags = 0;
   flags.innerHTML = "Mines Left: " + (numOfMines - numFlags);
   canvas.width = gridColumnCount * squareSize;
   canvas.height = gridRowCount * squareSize;
@@ -211,6 +212,7 @@ function attemptWin() {
   }
   if(numExposedSquares == (gridRowCount * gridColumnCount) - numOfMines) {
     isGameOver = true;
+    flags.innerHTML = "Mines Left: 0";
     title.innerHTML = "winner winner chicken dinner";
     // reveal all the flags
     for(var r = 0; r < gridRowCount; r++) {
