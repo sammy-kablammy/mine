@@ -5,6 +5,8 @@ var columnsInput = document.getElementById("columns");
 var bombsInput = document.getElementById("bombs");
 var title = document.getElementById("title");
 var flags = document.getElementById("flags");
+var victoryImage = document.getElementById("victoryImage");
+var loseImage = document.getElementById("loseImage");
 
 var numOfMines;
 var gridColumnCount;
@@ -24,17 +26,32 @@ function resetGame() {
   gridColumnCount = columnsInput.value;
   numOfMines = bombsInput.value;
 
-  numFlags = 0;
-  flags.innerHTML = "Mines Left: " + (numOfMines - numFlags);
-  canvas.width = gridColumnCount * squareSize;
-  canvas.height = gridRowCount * squareSize;
-  gameStarted = false;
-  isGameOver = false;
-  initializeGrid();
-  generateMines();
-  generateEmptySpaces();
-  drawGrid();
-  title.innerHTML = "mine sweep 💣💯";
+  var areNumeric = !isNaN(gridRowCount) && !isNaN(gridColumnCount) && !isNaN(numOfMines);
+  if(areNumeric && gridRowCount > 0 && gridColumnCount > 0 && numOfMines > 0 && numOfMines <= gridRowCount * gridColumnCount - 1) {
+    numFlags = 0;
+    victoryImage.style = "visibility: hidden";
+    loseImage.style = "visibility: hidden";
+    flags.innerHTML = "Mines Left: " + (numOfMines - numFlags);
+    canvas.width = gridColumnCount * squareSize;
+    canvas.height = gridRowCount * squareSize;
+    gameStarted = false;
+    isGameOver = false;
+    initializeGrid();
+    generateMines();
+    generateEmptySpaces();
+    drawGrid();
+    title.innerHTML = "mine sweep 💣💯";
+  }
+  else if(gridRowCount <= 0 || isNaN(gridRowCount)) {
+    title.innerHTML = "uh oh bucko. that's not a valid row count";
+  }
+  else if(gridColumnCount <= 0 || isNaN(gridColumnCount)) {
+    title.innerHTML = "uh oh bucko. that's not a valid column count";
+  }
+  else if(numOfMines <= 0 || numOfMines > gridRowCount * gridColumnCount - 1 || isNaN(numOfMines)) {
+    title.innerHTML = "uh oh bucko. that's not a valid mine count";
+  }
+  else console.log(typeof parseInt(gridRowCount) == "number");
 }
 
 // click handles pretty much all of the game logic
@@ -100,6 +117,7 @@ function drawGrid() {
         if(grid[r][c].flagged) {
           var textOffset = (squareSize - ctx.measureText(grid[r][c].val).width) / 2;
           ctx.fillStyle = "pink";
+          ctx.font = "18px Arial";
           ctx.fillText("F", (c * canvas.width / gridColumnCount) + textOffset, (r * canvas.height / gridRowCount) + textOffset);
         }
       }
@@ -189,6 +207,7 @@ function gameOver() {
   isGameOver = true;
   title.innerHTML = "L bozo you lose";
   flags.innerHTML = "Mines Left: 0";
+  loseImage.style = "visibility: initial";
   // reveal all the mines
   for(var r = 0; r < gridRowCount; r++) {
     for(var c = 0; c < gridColumnCount; c++) {
@@ -214,6 +233,7 @@ function attemptWin() {
     isGameOver = true;
     flags.innerHTML = "Mines Left: 0";
     title.innerHTML = "winner winner chicken dinner";
+    victoryImage.style = "visibility: initial";
     // reveal all the flags
     for(var r = 0; r < gridRowCount; r++) {
       for(var c = 0; c < gridColumnCount; c++) {

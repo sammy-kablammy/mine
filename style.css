@@ -1,38 +1,46 @@
 html {
   background-color: lightgrey;
   font: 24px Arial;
+  margin-left: 12px;
 }
-
 canvas {
   display: inline;
   background-color: #eeeeee;
   border: 1px solid black;
 }
-
 input {
   font: 16px Arial;
   width: 32px;
   margin-top: 8px;
   margin-bottom: 8px;
 }
-
 button {
   margin-top: 16px;
   font: 28px Arial;
 }
-
 h3 {
   font: 24px Arial;
   display: inline;
   margin-right: 5px;
 }
-
 .left {
   float: left;
   width: 180px;
 }
-
 .right {
   float: right;
-  width: 700px;
+  width: 400px;
+}
+.below {
+  position: relative;
+}
+/*
+use position: relative on the parent element and position: absolute on the child elements to have elements stacked on top of each other
+*/
+.endImages {
+  margin-left: 100px;
+  position: absolute;
+  visibility: hidden;
+  width: 200px;
+  height: 200px;
 }
