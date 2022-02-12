@@ -28,7 +28,6 @@ function resetGame() {
   gridColumnCount = columnsInput.value;
   numOfMines = minesInput.value;
   doFreeClick = free.checked;
-  console.log(doFreeClick);
 
   var areNumeric = !isNaN(gridRowCount) && !isNaN(gridColumnCount) && !isNaN(numOfMines);
   // this section actually resets the game
@@ -53,6 +52,7 @@ function resetGame() {
             if(!foundIt && grid[r][c].val == num) {
               revealSquare(r, c);
               foundIt = true;
+              gameStarted = true;
             }
           }
         }
@@ -98,6 +98,9 @@ function revealSquare(r, c) {
         for(var localC = -1; localC < 2; localC++) {
           var isInBounds = (r + localR >= 0 && r + localR < gridRowCount && c + localC >= 0 && c + localC < gridColumnCount)
           if(isInBounds && grid[r + localR][c + localC].hidden && !grid[r + localR][c + localC].flagged) {
+            if(grid[r + localR][c + localC].val == "M") {
+              gameOver();
+            }
             revealSquare(r + localR, c + localC);
           }
         }
