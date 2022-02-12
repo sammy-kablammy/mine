@@ -12,7 +12,7 @@
     <h1 id="title">mine sweep 💣💯</h1>
 
     <div class="left">
-      <p id="flags">Mines Left: 12</p>
+      <p id="flags">Mines Left: 16</p>
       <h3>rows: </h3>
       <input id="rows" value="10"></input>
       <br>
@@ -20,9 +20,14 @@
       <input id="columns" value="10"></input>
       <br>
       <h3>mines: </h3>
-      <input id="bombs" value="12"></input>
+      <input id="mines" value="16"></input>
+      <br>
+      <input class="checkbox" type="checkbox" id="free">free click</input>
       <br>
       <button id="reset" onclick="resetGame()">reset game</button>
+      <button id="easy" onclick="setDifficulty(10, 10, 16)" class="difficulty">easy</button>
+      <button id="medium" onclick="setDifficulty(20, 20, 50)" class="difficulty">medium</button>
+      <button id="hard" onclick="setDifficulty(30, 30, 200)" class="difficulty">hard</button>
     </div>
     <canvas id="canv" width=256 height=256></canvas>
 
@@ -31,7 +36,6 @@
       <ul>
         <li>timer and like score and stuff</li>
         <li>touchscreen input</li>
-        <li>difficulty presets?</li>
       </ul>
     </div>
 

@@ -9,7 +9,7 @@ canvas {
   border: 1px solid black;
 }
 input {
-  font: 16px Arial;
+  font: 14px Arial;
   width: 32px;
   margin-top: 8px;
   margin-bottom: 8px;
@@ -43,4 +43,7 @@ use position: relative on the parent element and position: absolute on the child
   visibility: hidden;
   width: 200px;
   height: 200px;
+}
+.difficulty {
+  font: 12px Arial;
 }

@@ -2,11 +2,12 @@ var canvas = document.getElementById("canv");
 var ctx = canvas.getContext("2d");
 var rowsInput = document.getElementById("rows");
 var columnsInput = document.getElementById("columns");
-var bombsInput = document.getElementById("bombs");
+var minesInput = document.getElementById("mines");
 var title = document.getElementById("title");
 var flags = document.getElementById("flags");
 var victoryImage = document.getElementById("victoryImage");
 var loseImage = document.getElementById("loseImage");
+var free = document.getElementById("free");
 
 var numOfMines;
 var gridColumnCount;
@@ -19,14 +20,18 @@ var numFlags = 0;
 var interval = -1;
 var isGameOver = false;
 var gameStarted = false; // changes when the first move has been made
+var doFreeClick = false;
 
 function resetGame() {
   // these come from the html <input> elements
   gridRowCount = rowsInput.value;
   gridColumnCount = columnsInput.value;
-  numOfMines = bombsInput.value;
+  numOfMines = minesInput.value;
+  doFreeClick = free.checked;
+  console.log(doFreeClick);
 
   var areNumeric = !isNaN(gridRowCount) && !isNaN(gridColumnCount) && !isNaN(numOfMines);
+  // this section actually resets the game
   if(areNumeric && gridRowCount > 0 && gridColumnCount > 0 && numOfMines > 0 && numOfMines <= gridRowCount * gridColumnCount - 1) {
     numFlags = 0;
     victoryImage.style = "visibility: hidden";
@@ -39,6 +44,20 @@ function resetGame() {
     initializeGrid();
     generateMines();
     generateEmptySpaces();
+    // do free first click
+    if(doFreeClick) {
+      var foundIt = false;
+      for(var num = 0; num <= 8; num++) {
+        for(var r = 0; r < gridRowCount; r++) {
+          for(var c = 0; c < gridColumnCount; c++) {
+            if(!foundIt && grid[r][c].val == num) {
+              revealSquare(r, c);
+              foundIt = true;
+            }
+          }
+        }
+      }
+    }
     drawGrid();
     title.innerHTML = "mine sweep 💣💯";
   }
@@ -305,6 +324,12 @@ function getNearbyFlagCount(r, c) {
     }
   }
   return localFlagCount;
+}
+
+function setDifficulty(r, c, m) {
+  rowsInput.value = r;
+  columnsInput.value = c;
+  minesInput.value = m;
 }
 
 function mouseDownFunc(e) {
