@@ -18,6 +18,9 @@ button {
   margin-top: 16px;
   font: 28px Arial;
 }
+p {
+  margin: 0px;
+}
 h3 {
   font: 24px Arial;
   display: inline;

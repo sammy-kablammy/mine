@@ -8,6 +8,7 @@ var flags = document.getElementById("flags");
 var victoryImage = document.getElementById("victoryImage");
 var loseImage = document.getElementById("loseImage");
 var free = document.getElementById("free");
+var timerText = document.getElementById("timer");
 
 var numOfMines;
 var gridColumnCount;
@@ -21,6 +22,8 @@ var interval = -1;
 var isGameOver = false;
 var gameStarted = false; // changes when the first move has been made
 var doFreeClick = false;
+var timerInterval;
+var time = 0;
 
 function resetGame() {
   // these come from the html <input> elements
@@ -40,6 +43,8 @@ function resetGame() {
     canvas.height = gridRowCount * squareSize;
     gameStarted = false;
     isGameOver = false;
+    time = 0;
+    clearInterval(timerInterval);
     initializeGrid();
     generateMines();
     generateEmptySpaces();
@@ -53,6 +58,7 @@ function resetGame() {
               revealSquare(r, c);
               foundIt = true;
               gameStarted = true;
+              timerInterval = setInterval(timeTick, 1000);
             }
           }
         }
@@ -80,7 +86,10 @@ function click(e) {
     if(position != null && !isGameOver && !grid[position.row][position.column].flagged) {
       if(grid[position.row][position.column].val == "M") gameOver();
       else revealSquare(position.row, position.column);
-      if(!gameStarted) gameStarted = true;
+      if(!gameStarted) {
+        gameStarted = true;
+        timerInterval = setInterval(timeTick, 1000);
+      }
     }
     attemptWin();
   }
@@ -227,6 +236,7 @@ function generateEmptySpaces() {
 
 function gameOver() {
   isGameOver = true;
+  clearInterval(timerInterval);
   title.innerHTML = "L bozo you lose";
   flags.innerHTML = "Mines Left: 0";
   loseImage.style = "visibility: initial";
@@ -253,6 +263,7 @@ function attemptWin() {
   }
   if(numExposedSquares == (gridRowCount * gridColumnCount) - numOfMines) {
     isGameOver = true;
+    clearInterval(timerInterval);
     flags.innerHTML = "Mines Left: 0";
     title.innerHTML = "winner winner chicken dinner";
     victoryImage.style = "visibility: initial";
@@ -329,6 +340,15 @@ function getNearbyFlagCount(r, c) {
   return localFlagCount;
 }
 
+function timeTick() {
+  time += 1;
+}
+
+function infiniteLoop() {
+  timerText.innerHTML = "Time: " + time + "s";
+  requestAnimationFrame(infiniteLoop);
+}
+
 function setDifficulty(r, c, m) {
   rowsInput.value = r;
   columnsInput.value = c;
@@ -389,4 +409,5 @@ document.addEventListener("contextmenu", rightClickFunc);
 canvas.addEventListener("mousemove", mouseMove);
 canvas.addEventListener("mousedown", mouseDownFunc);
 canvas.addEventListener("mouseup", mouseUpFunc);
+infiniteLoop();
 resetGame();
