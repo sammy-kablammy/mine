@@ -9,6 +9,7 @@ var victoryImage = document.getElementById("victoryImage");
 var loseImage = document.getElementById("loseImage");
 var free = document.getElementById("free");
 var timerText = document.getElementById("timer");
+var score = document.getElementById("score");
 
 var numOfMines;
 var gridColumnCount;
@@ -38,6 +39,7 @@ function resetGame() {
     numFlags = 0;
     victoryImage.style = "visibility: hidden";
     loseImage.style = "visibility: hidden";
+    score.style = "visibility: hidden";
     flags.innerHTML = "Mines Left: " + (numOfMines - numFlags);
     canvas.width = gridColumnCount * squareSize;
     canvas.height = gridRowCount * squareSize;
@@ -86,7 +88,7 @@ function click(e) {
     if(position != null && !isGameOver && !grid[position.row][position.column].flagged) {
       if(grid[position.row][position.column].val == "M") gameOver();
       else revealSquare(position.row, position.column);
-      if(!gameStarted) {
+      if(!gameStarted && !isGameOver) {
         gameStarted = true;
         timerInterval = setInterval(timeTick, 1000);
       }
@@ -267,6 +269,8 @@ function attemptWin() {
     flags.innerHTML = "Mines Left: 0";
     title.innerHTML = "winner winner chicken dinner";
     victoryImage.style = "visibility: initial";
+    score.innerHTML = "Score: " + (numOfMines / time).toFixed(3) + " mines per second";
+    score.style = "visibility: initial";
     // reveal all the flags
     for(var r = 0; r < gridRowCount; r++) {
       for(var c = 0; c < gridColumnCount; c++) {
