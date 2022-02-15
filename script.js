@@ -313,6 +313,22 @@ function getIndexAtMouseCoords() {
   }
 }
 
+// converts touch position in pixels to the index values in the 2D array
+function getIndexAtTouchCoords(e) {
+  for(var r = 0; r < gridRowCount; r++) {
+    for(var c = 0; c < gridColumnCount; c++) {
+      var withinX = e.pageX > c * canvas.width / gridColumnCount && e.pageX < (c * canvas.width / gridColumnCount) + squareSize;
+      var withinY = e.pageY > r * canvas.height / gridRowCount && e.pageY < (r * canvas.height / gridRowCount) + squareSize;
+      if(withinX && withinY) {
+        return {
+          row: r,
+          column: c
+        }
+      }
+    }
+  }
+}
+
 // returns number of mines in 8 blocks around r, c
 function getNearbyMineCount(r, c) {
   var mineCount = 0;
@@ -409,9 +425,28 @@ function initializeGrid() {
   }
 }
 
+function touchDownFunc(e) {
+  if(interval == -1) {
+    var position = getIndexAtTouchCoords(e);
+    if(position != null) {
+      interval = setInterval(placeFlag, 400, position.row, position.column);
+    }
+  }
+}
+
+function touchEndFunc(e) {
+    if(interval != -1) {
+      click(e);
+      clearInterval(interval);
+      interval = -1;
+    }
+}
+
 document.addEventListener("contextmenu", rightClickFunc);
 canvas.addEventListener("mousemove", mouseMove);
 canvas.addEventListener("mousedown", mouseDownFunc);
 canvas.addEventListener("mouseup", mouseUpFunc);
+canvas.addEventListener("touchdown", touchDownFunc);
+canvas.addEventListener("touchend", touchEndFunc);
 infiniteLoop();
 resetGame();
