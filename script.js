@@ -98,6 +98,20 @@ function click(e) {
   drawGrid();
 }
 
+function tap(e) {
+  var position = getIndexAtTouchCoords(e);
+  if(position != null && !isGameOver && !grid[position.row][position.column].flagged) {
+    if(grid[position.row][position.column].val == "M") gameOver();
+    else revealSquare(position.row, position.column);
+    if(!gameStarted && !isGameOver) {
+      gameStarted = true;
+      timerInterval = setInterval(timeTick, 1000);
+    }
+  }
+  attemptWin();
+  drawGrid();
+}
+
 // reveal the given square; also handles chains of zeroes being revealed
 function revealSquare(r, c) {
   grid[r][c].hidden = false;
@@ -317,8 +331,8 @@ function getIndexAtMouseCoords() {
 function getIndexAtTouchCoords(e) {
   for(var r = 0; r < gridRowCount; r++) {
     for(var c = 0; c < gridColumnCount; c++) {
-      var withinX = e.pageX > c * canvas.width / gridColumnCount && e.pageX < (c * canvas.width / gridColumnCount) + squareSize;
-      var withinY = e.pageY > r * canvas.height / gridRowCount && e.pageY < (r * canvas.height / gridRowCount) + squareSize;
+      var withinX = e.clientX > c * canvas.width / gridColumnCount && e.clientX < (c * canvas.width / gridColumnCount) + squareSize;
+      var withinY = e.clientY > r * canvas.height / gridRowCount && e.clientY < (r * canvas.height / gridRowCount) + squareSize;
       if(withinX && withinY) {
         return {
           row: r,
@@ -365,7 +379,8 @@ function timeTick() {
 }
 
 function infiniteLoop() {
-  timerText.innerHTML = "Time: " + time + "s";
+  // timerText.innerHTML = "Time: " + time + "s";
+  timerText.innerHTML = interval;
   requestAnimationFrame(infiniteLoop);
 }
 
@@ -425,9 +440,14 @@ function initializeGrid() {
   }
 }
 
-function touchDownFunc(e) {
+function touchStartFunc(e) {
+  var c = e.changedTouches[0];
+
+  var pp = getCanvasPos(c);
+  
   if(interval == -1) {
-    var position = getIndexAtTouchCoords(e);
+    var position = getIndexAtTouchCoords(pp);
+    title.innerHTML = "PASSED IF " + position.row + " " + position.column;
     if(position != null) {
       interval = setInterval(placeFlag, 400, position.row, position.column);
     }
@@ -435,18 +455,30 @@ function touchDownFunc(e) {
 }
 
 function touchEndFunc(e) {
-    if(interval != -1) {
-      click(e);
-      clearInterval(interval);
-      interval = -1;
-    }
+  // title.innerHTML = "end";\
+
+  var jj = getCanvasPos(e.changedTouches[0]);
+  
+  if(interval != -1) {
+    tap(jj);
+    clearInterval(interval);
+    interval = -1;
+  }
+}
+
+function getCanvasPos(e) {
+  var rect = canvas.getBoundingClientRect();
+  return {
+    clientX: parseInt(e.clientX - rect.left),
+    clientY: parseInt(e.clientY - rect.top)
+  }
 }
 
 document.addEventListener("contextmenu", rightClickFunc);
 canvas.addEventListener("mousemove", mouseMove);
-canvas.addEventListener("mousedown", mouseDownFunc);
-canvas.addEventListener("mouseup", mouseUpFunc);
-canvas.addEventListener("touchdown", touchDownFunc);
+// canvas.addEventListener("mousedown", mouseDownFunc);
+// canvas.addEventListener("mouseup", mouseUpFunc);
+canvas.addEventListener("touchstart", touchStartFunc);
 canvas.addEventListener("touchend", touchEndFunc);
 infiniteLoop();
 resetGame();
