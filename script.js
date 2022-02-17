@@ -81,16 +81,6 @@ function resetGame() {
   else console.log(typeof parseInt(gridRowCount) == "number");
 }
 
-function clickMouse(e) {
-  var position = getIndexAtMouseCoords(e);
-  click(position);
-}
-
-function clickTouchscreen(e) {
-  var position = getIndexAtTouchCoords(e);
-  click(position);
-}
-
 // click handles pretty much all of the game logic
 function click(position) {
   if(position != null && !isGameOver && !grid[position.row][position.column].flagged) {
@@ -222,6 +212,7 @@ function drawGrid() {
   }
 }
 
+// generates mines (duh)
 function generateMines() {
   var minesGenerated = 0;
   while(minesGenerated < numOfMines) {
@@ -403,7 +394,7 @@ function mouseDownFunc(e) {
 function mouseUpFunc(e) {
   if(e.button == 0) {
     if(interval != -1) {
-      clickMouse(e);
+      click(getIndexAtMouseCoords(e));
       clearInterval(interval);
       interval = -1;
     }
@@ -446,9 +437,10 @@ function touchStartFunc(e) {
 }
 
 function touchEndFunc(e) {
+  // we want touch position on canvas specifically, not on webpage as a whole
   var touchPosOnCanvas = getCanvasPos(e.changedTouches[0]);
   if(interval != -1) {
-    clickTouchscreen(touchPosOnCanvas);
+    click(getIndexAtTouchCoords(touchPosOnCanvas));
     clearInterval(interval);
     interval = -1;
   }
