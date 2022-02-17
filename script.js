@@ -81,25 +81,18 @@ function resetGame() {
   else console.log(typeof parseInt(gridRowCount) == "number");
 }
 
-// click handles pretty much all of the game logic
-function click(e) {
-  if(e.button == 0) {
-    var position = getIndexAtMouseCoords();
-    if(position != null && !isGameOver && !grid[position.row][position.column].flagged) {
-      if(grid[position.row][position.column].val == "M") gameOver();
-      else revealSquare(position.row, position.column);
-      if(!gameStarted && !isGameOver) {
-        gameStarted = true;
-        timerInterval = setInterval(timeTick, 1000);
-      }
-    }
-    attemptWin();
-  }
-  drawGrid();
+function clickMouse(e) {
+  var position = getIndexAtMouseCoords(e);
+  click(position);
 }
 
-function tap(e) {
+function clickTouchscreen(e) {
   var position = getIndexAtTouchCoords(e);
+  click(position);
+}
+
+// click handles pretty much all of the game logic
+function click(position) {
   if(position != null && !isGameOver && !grid[position.row][position.column].flagged) {
     if(grid[position.row][position.column].val == "M") gameOver();
     else revealSquare(position.row, position.column);
@@ -164,6 +157,9 @@ function drawGrid() {
         if(grid[r][c].flagged) {
           var textOffset = (squareSize - ctx.measureText(grid[r][c].val).width) / 2;
           ctx.fillStyle = "pink";
+          ctx.rect(c * canvas.width / gridColumnCount, r * canvas.height / gridRowCount, squareSize, squareSize);
+          ctx.fill();
+          ctx.fillStyle = "black";
           ctx.font = "18px Arial";
           ctx.fillText("F", (c * canvas.width / gridColumnCount) + textOffset, (r * canvas.height / gridRowCount) + textOffset);
         }
@@ -379,8 +375,7 @@ function timeTick() {
 }
 
 function infiniteLoop() {
-  // timerText.innerHTML = "Time: " + time + "s";
-  timerText.innerHTML = interval;
+  timerText.innerHTML = "Time: " + time + "s";
   requestAnimationFrame(infiniteLoop);
 }
 
@@ -408,7 +403,7 @@ function mouseDownFunc(e) {
 function mouseUpFunc(e) {
   if(e.button == 0) {
     if(interval != -1) {
-      click(e);
+      clickMouse(e);
       clearInterval(interval);
       interval = -1;
     }
@@ -441,13 +436,9 @@ function initializeGrid() {
 }
 
 function touchStartFunc(e) {
-  var c = e.changedTouches[0];
-
-  var pp = getCanvasPos(c);
-  
+  var touchPosOnCanvas = getCanvasPos(e.changedTouches[0])
   if(interval == -1) {
-    var position = getIndexAtTouchCoords(pp);
-    title.innerHTML = "PASSED IF " + position.row + " " + position.column;
+    var position = getIndexAtTouchCoords(touchPosOnCanvas);
     if(position != null) {
       interval = setInterval(placeFlag, 400, position.row, position.column);
     }
@@ -455,12 +446,9 @@ function touchStartFunc(e) {
 }
 
 function touchEndFunc(e) {
-  // title.innerHTML = "end";\
-
-  var jj = getCanvasPos(e.changedTouches[0]);
-  
+  var touchPosOnCanvas = getCanvasPos(e.changedTouches[0]);
   if(interval != -1) {
-    tap(jj);
+    clickTouchscreen(touchPosOnCanvas);
     clearInterval(interval);
     interval = -1;
   }
@@ -476,8 +464,8 @@ function getCanvasPos(e) {
 
 document.addEventListener("contextmenu", rightClickFunc);
 canvas.addEventListener("mousemove", mouseMove);
-// canvas.addEventListener("mousedown", mouseDownFunc);
-// canvas.addEventListener("mouseup", mouseUpFunc);
+canvas.addEventListener("mousedown", mouseDownFunc);
+canvas.addEventListener("mouseup", mouseUpFunc);
 canvas.addEventListener("touchstart", touchStartFunc);
 canvas.addEventListener("touchend", touchEndFunc);
 infiniteLoop();
