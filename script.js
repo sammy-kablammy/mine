@@ -15,27 +15,27 @@ var numOfMines;
 var gridColumnCount;
 var gridRowCount;
 var squareSize = 32;
-var mouseX = 0;
-var mouseY = 0;
 var grid = []; // holds all the mines and numbers and stuff
 var numFlags = 0;
 var interval = -1;
-var isGameOver = false;
+var isGameOver;
 var gameStarted = false; // changes when the first move has been made
-var doFreeClick = false;
 var timerInterval;
 var time = 0;
 
 function resetGame() {
+  isGameOver = true; // stop the game from continuing whenever reset button is clicked
+  
   // these come from the html <input> elements
+  var doFreeClick = free.checked;
   gridRowCount = rowsInput.value;
   gridColumnCount = columnsInput.value;
   numOfMines = minesInput.value;
-  doFreeClick = free.checked;
-
+  
   var areNumeric = !isNaN(gridRowCount) && !isNaN(gridColumnCount) && !isNaN(numOfMines);
+  var areInts = gridRowCount == parseInt(gridRowCount) && gridColumnCount == parseInt(gridColumnCount) && numOfMines == parseInt(numOfMines);
   // this section actually resets the game
-  if(areNumeric && gridRowCount > 0 && gridColumnCount > 0 && numOfMines > 0 && numOfMines <= gridRowCount * gridColumnCount - 1) {
+  if(areNumeric && areInts && gridRowCount > 0 && gridColumnCount > 0 && numOfMines > 0 && numOfMines <= gridRowCount * gridColumnCount - 1) {
     numFlags = 0;
     victoryImage.style = "visibility: hidden";
     loseImage.style = "visibility: hidden";
@@ -51,83 +51,34 @@ function resetGame() {
     generateMines();
     generateEmptySpaces();
     // do free first click
-    if(doFreeClick) {
-      var foundIt = false;
-      for(var num = 0; num <= 8; num++) {
-        for(var r = 0; r < gridRowCount; r++) {
-          for(var c = 0; c < gridColumnCount; c++) {
-            if(!foundIt && grid[r][c].val == num) {
-              revealSquare(r, c);
-              foundIt = true;
-              gameStarted = true;
-              timerInterval = setInterval(timeTick, 1000);
-            }
-          }
-        }
-      }
-    }
+    if(doFreeClick) freeClick();
     drawGrid();
     title.innerHTML = "mine sweep 💣💯";
   }
-  else if(gridRowCount <= 0 || isNaN(gridRowCount)) {
+  else if(gridRowCount <= 0 || isNaN(gridRowCount) || gridRowCount != parseInt(gridRowCount)) {
     title.innerHTML = "uh oh bucko. that's not a valid row count";
   }
-  else if(gridColumnCount <= 0 || isNaN(gridColumnCount)) {
+  else if(gridColumnCount <= 0 || isNaN(gridColumnCount) || gridColumnCount != parseInt(gridColumnCount)) {
     title.innerHTML = "uh oh bucko. that's not a valid column count";
   }
-  else if(numOfMines <= 0 || numOfMines > gridRowCount * gridColumnCount - 1 || isNaN(numOfMines)) {
+  else if(numOfMines <= 0 || numOfMines > gridRowCount * gridColumnCount - 1 || isNaN(numOfMines) || numOfMines != parseInt(numOfMines)) {
     title.innerHTML = "uh oh bucko. that's not a valid mine count";
   }
-  else console.log(typeof parseInt(gridRowCount) == "number");
 }
 
 // click handles pretty much all of the game logic
 function click(position) {
-  if(position != null && !isGameOver && !grid[position.row][position.column].flagged) {
-    if(grid[position.row][position.column].val == "M") gameOver();
-    else revealSquare(position.row, position.column);
-    if(!gameStarted && !isGameOver) {
-      gameStarted = true;
-      timerInterval = setInterval(timeTick, 1000);
+  if(!isGameOver) {
+    if(position != null && !grid[position.row][position.column].flagged) {
+      if(grid[position.row][position.column].val == "M") gameOver();
+      else revealSquare(position.row, position.column);
+      if(!gameStarted) {
+        gameStarted = true;
+        timerInterval = setInterval(timeTick, 1000);
+      }
     }
-  }
   attemptWin();
   drawGrid();
-}
-
-// reveal the given square; also handles chains of zeroes being revealed
-function revealSquare(r, c) {
-  grid[r][c].hidden = false;
-  // handles clicking on a number to reveal the non-flags around it
-  if(!grid[r][c].flagged && grid[r][c].val != "M") {
-    if(getNearbyMineCount(r, c) <= getNearbyFlagCount(r, c)) {
-      // reveal 8 around r, c
-      for(var localR = -1; localR < 2; localR++) {
-        for(var localC = -1; localC < 2; localC++) {
-          var isInBounds = (r + localR >= 0 && r + localR < gridRowCount && c + localC >= 0 && c + localC < gridColumnCount)
-          if(isInBounds && grid[r + localR][c + localC].hidden && !grid[r + localR][c + localC].flagged) {
-            if(grid[r + localR][c + localC].val == "M") {
-              gameOver();
-            }
-            revealSquare(r + localR, c + localC);
-          }
-        }
-      }
-    }
-  }
-  // handles zero chain shenanigans
-  for(var localR = -1; localR < 2; localR++) {
-    for(var localC = -1; localC < 2; localC++) {
-      var isInBounds = (r + localR >= 0 && r + localR < gridRowCount && c + localC >= 0 && c + localC < gridColumnCount)
-      // if r, c is zero, reveal everything around it
-      if(grid[r][c].val == 0 && isInBounds && grid[r + localR][c + localC].hidden) {
-        revealSquare(r + localR, c + localC);
-      }
-      // if one of the "8 squares around me" is zero, reveal that square
-      else if(isInBounds && grid[r + localR][c + localC].val == 0 && grid[r + localR][c + localC].hidden) {
-        revealSquare(r + localR, c + localC);
-      }
-    }
   }
 }
 
@@ -224,7 +175,6 @@ function generateMines() {
     }
   }
 }
-
 // figures out what number should be in each square based on # of mines near it
 function generateEmptySpaces() {
   for(var r = 0; r < gridRowCount; r++) {
@@ -237,6 +187,7 @@ function generateEmptySpaces() {
   }
 }
 
+// you lose, bucko
 function gameOver() {
   isGameOver = true;
   clearInterval(timerInterval);
@@ -253,7 +204,6 @@ function gameOver() {
     }
   }
 }
-
 // attemptWin checks if the game has been won, then does the game-winny things
 function attemptWin() {
   var numExposedSquares = 0;
@@ -283,43 +233,91 @@ function attemptWin() {
   }
 }
 
-function placeFlag(r, c) {
-  clearInterval(interval);
-  interval = -1;
-  if(!isGameOver && gameStarted && !grid[r][c].flagged && grid[r][c].hidden) {
-    grid[r][c].flagged = true;
-    numFlags++;
+// reveal the given square; also handles chains of zeroes being revealed
+function revealSquare(r, c) {
+  grid[r][c].hidden = false;
+  // handles clicking on a number to reveal the non-flags around it
+  if(!grid[r][c].flagged && grid[r][c].val != "M") {
+    if(getNearbyMineCount(r, c) <= getNearbyFlagCount(r, c)) {
+      // reveal 8 around r, c
+      for(var localR = -1; localR < 2; localR++) {
+        for(var localC = -1; localC < 2; localC++) {
+          var isInBounds = (r + localR >= 0 && r + localR < gridRowCount && c + localC >= 0 && c + localC < gridColumnCount)
+          if(isInBounds && grid[r + localR][c + localC].hidden && !grid[r + localR][c + localC].flagged) {
+            if(grid[r + localR][c + localC].val == "M") {
+              gameOver();
+            }
+            revealSquare(r + localR, c + localC);
+          }
+        }
+      }
+    }
   }
-  else if(!isGameOver && grid[r][c].flagged) {
-    grid[r][c].flagged = false;
-    numFlags--;
+  // handles zero chain shenanigans
+  for(var localR = -1; localR < 2; localR++) {
+    for(var localC = -1; localC < 2; localC++) {
+      var isInBounds = (r + localR >= 0 && r + localR < gridRowCount && c + localC >= 0 && c + localC < gridColumnCount)
+      // if r, c is zero, reveal everything around it
+      if(grid[r][c].val == 0 && isInBounds && grid[r + localR][c + localC].hidden) {
+        revealSquare(r + localR, c + localC);
+      }
+      // if one of the "8 squares around me" is zero, reveal that square
+      else if(isInBounds && grid[r + localR][c + localC].val == 0 && grid[r + localR][c + localC].hidden) {
+        revealSquare(r + localR, c + localC);
+      }
+    }
   }
-  drawGrid();
-  flags.innerHTML = "Mines Left: " + (numOfMines - numFlags);
 }
-
-// converts mouse position in pixels to the index values in the 2D array
-function getIndexAtMouseCoords() {
-  for(var r = 0; r < gridRowCount; r++) {
-    for(var c = 0; c < gridColumnCount; c++) {
-      var withinX = mouseX > c * canvas.width / gridColumnCount && mouseX < (c * canvas.width / gridColumnCount) + squareSize;
-      var withinY = mouseY > r * canvas.height / gridRowCount && mouseY < (r * canvas.height / gridRowCount) + squareSize;
-      if(withinX && withinY) {
-        return {
-          row: r,
-          column: c
+// place a flag at given row and column
+function placeFlag(r, c) {
+  if(!isGameOver) {
+    clearInterval(interval);
+    interval = -1;
+    if(!isGameOver && gameStarted && !grid[r][c].flagged && grid[r][c].hidden) {
+      grid[r][c].flagged = true;
+      numFlags++;
+    }
+    else if(!isGameOver && grid[r][c].flagged) {
+      grid[r][c].flagged = false;
+      numFlags--;
+    }
+    drawGrid();
+    flags.innerHTML = "Mines Left: " + (numOfMines - numFlags);
+  }
+}
+// finds an available non-mine square and reveals it
+function freeClick() {
+  var foundIt = false;
+  for(var num = 0; num <= 8; num++) {
+    for(var r = 0; r < gridRowCount; r++) {
+      for(var c = 0; c < gridColumnCount; c++) {
+        if(!foundIt && grid[r][c].val == num) {
+          revealSquare(r, c);
+          foundIt = true;
+          gameStarted = true;
+          timerInterval = setInterval(timeTick, 1000);
         }
       }
     }
   }
 }
 
-// converts touch position in pixels to the index values in the 2D array
-function getIndexAtTouchCoords(e) {
+// converts mouse (or touch) position on the webpage to its position relative to the canvas
+function getCanvasPos(e) {
+  var rect = canvas.getBoundingClientRect();
+  return {
+    x: parseInt(e.clientX - rect.left),
+    y: parseInt(e.clientY - rect.top)
+  }
+}
+// converts mouse (or touch) position in the canvas to index values in the 2D array
+function getIndexAtCanvasCoords(position) {
+  var x = position.x;
+  var y = position.y;
   for(var r = 0; r < gridRowCount; r++) {
     for(var c = 0; c < gridColumnCount; c++) {
-      var withinX = e.clientX > c * canvas.width / gridColumnCount && e.clientX < (c * canvas.width / gridColumnCount) + squareSize;
-      var withinY = e.clientY > r * canvas.height / gridRowCount && e.clientY < (r * canvas.height / gridRowCount) + squareSize;
+      var withinX = x > c * canvas.width / gridColumnCount && x < (c * canvas.width / gridColumnCount) + squareSize;
+      var withinY = y > r * canvas.height / gridRowCount && y < (r * canvas.height / gridRowCount) + squareSize;
       if(withinX && withinY) {
         return {
           row: r,
@@ -361,58 +359,11 @@ function getNearbyFlagCount(r, c) {
   return localFlagCount;
 }
 
-function timeTick() {
-  time += 1;
-}
-
-function infiniteLoop() {
-  timerText.innerHTML = "Time: " + time + "s";
-  requestAnimationFrame(infiniteLoop);
-}
-
 function setDifficulty(r, c, m) {
   rowsInput.value = r;
   columnsInput.value = c;
   minesInput.value = m;
 }
-
-function mouseDownFunc(e) {
-  if(e.button == 2) {
-    var position = getIndexAtMouseCoords();
-    if(position != null) {
-      placeFlag(position.row, position.column);
-    }
-  }
-  if(interval == -1 && e.button == 0) {
-    var position = getIndexAtMouseCoords();
-    if(position != null) {
-      interval = setInterval(placeFlag, 400, position.row, position.column);
-    }
-  }
-}
-
-function mouseUpFunc(e) {
-  if(e.button == 0) {
-    if(interval != -1) {
-      click(getIndexAtMouseCoords(e));
-      clearInterval(interval);
-      interval = -1;
-    }
-  }
-}
-
-// only purpose of this is to prevent right click menu
-function rightClickFunc(e) {
-  // i think the reason this can't happen in the mouseDownFunc is because click events are cancellable while mousedown events are not ?
-  if(e.button == 2) e.preventDefault();
-}
-
-function mouseMove(e) {
-  var rect = canvas.getBoundingClientRect();
-  mouseX = e.clientX - rect.left;
-  mouseY = e.clientY - rect.top;
-}
-
 function initializeGrid() {
   for(var r = 0; r < gridRowCount; r++) {
     grid[r] = [];
@@ -426,36 +377,60 @@ function initializeGrid() {
   }
 }
 
-function touchStartFunc(e) {
-  var touchPosOnCanvas = getCanvasPos(e.changedTouches[0])
-  if(interval == -1) {
-    var position = getIndexAtTouchCoords(touchPosOnCanvas);
+function timeTick() {
+  time += 1;
+}
+function infiniteLoop() {
+  timerText.innerHTML = "Time: " + time + "s";
+  requestAnimationFrame(infiniteLoop);
+}
+
+// only purpose of this is to prevent right click menu
+function rightClickFunc(e) {
+  if(e.button == 2) e.preventDefault();
+}
+
+function mouseDownFunc(e) {
+  if(e.button == 2) {
+    var position = getIndexAtCanvasCoords(getCanvasPos(e));
+    if(position != null) {
+      placeFlag(position.row, position.column);
+    }
+  }
+  if(interval == -1 && e.button == 0) {
+    var position = getIndexAtCanvasCoords(getCanvasPos(e));
     if(position != null) {
       interval = setInterval(placeFlag, 400, position.row, position.column);
     }
   }
 }
+function mouseUpFunc(e) {
+  if(e.button == 0) {
+    if(interval != -1) {
+      click(getIndexAtCanvasCoords(getCanvasPos(e)));
+      clearInterval(interval);
+      interval = -1;
+    }
+  }
+}
 
+function touchStartFunc(e) {
+  if(interval == -1) {
+    var position = getIndexAtCanvasCoords(getCanvasPos(e.changedTouches[0]));
+    if(position != null) {
+      interval = setInterval(placeFlag, 400, position.row, position.column);
+    }
+  }
+}
 function touchEndFunc(e) {
-  // we want touch position on canvas specifically, not on webpage as a whole
-  var touchPosOnCanvas = getCanvasPos(e.changedTouches[0]);
   if(interval != -1) {
-    click(getIndexAtTouchCoords(touchPosOnCanvas));
+    click(getIndexAtCanvasCoords(getCanvasPos(e.changedTouches[0])));
     clearInterval(interval);
     interval = -1;
   }
 }
 
-function getCanvasPos(e) {
-  var rect = canvas.getBoundingClientRect();
-  return {
-    clientX: parseInt(e.clientX - rect.left),
-    clientY: parseInt(e.clientY - rect.top)
-  }
-}
-
 document.addEventListener("contextmenu", rightClickFunc);
-canvas.addEventListener("mousemove", mouseMove);
 canvas.addEventListener("mousedown", mouseDownFunc);
 canvas.addEventListener("mouseup", mouseUpFunc);
 canvas.addEventListener("touchstart", touchStartFunc);
