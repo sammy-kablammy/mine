@@ -28,7 +28,7 @@ h3 {
 }
 .left {
   float: left;
-  width: 180px;
+  width: 210px;
 }
 .right {
   float: right;
@@ -49,4 +49,8 @@ use position: relative on the parent element and position: absolute on the child
 }
 .difficulty {
   font: 12px Arial;
+}
+.enter {
+  font: 12px Arial;
+  margin: 0px;
 }

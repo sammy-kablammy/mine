@@ -10,6 +10,7 @@ var loseImage = document.getElementById("loseImage");
 var free = document.getElementById("free");
 var timerText = document.getElementById("timer");
 var score = document.getElementById("score");
+var delayInput = document.getElementById("flagdelay");
 
 var numOfMines;
 var gridColumnCount;
@@ -22,6 +23,7 @@ var isGameOver;
 var gameStarted = false; // changes when the first move has been made
 var timerInterval;
 var time = 0;
+var flagDelay = 200;
 
 function resetGame() {
   isGameOver = true; // stop the game from continuing whenever reset button is clicked
@@ -34,8 +36,9 @@ function resetGame() {
   
   var areNumeric = !isNaN(gridRowCount) && !isNaN(gridColumnCount) && !isNaN(numOfMines);
   var areInts = gridRowCount == parseInt(gridRowCount) && gridColumnCount == parseInt(gridColumnCount) && numOfMines == parseInt(numOfMines);
+  var arePositive = gridRowCount > 0 && gridColumnCount > 0 && numOfMines > 0;
   // this section actually resets the game
-  if(areNumeric && areInts && gridRowCount > 0 && gridColumnCount > 0 && numOfMines > 0 && numOfMines <= gridRowCount * gridColumnCount - 1) {
+  if(areNumeric && areInts && arePositive && numOfMines <= gridRowCount * gridColumnCount - 1) {
     numFlags = 0;
     victoryImage.style = "visibility: hidden";
     loseImage.style = "visibility: hidden";
@@ -46,11 +49,11 @@ function resetGame() {
     gameStarted = false;
     isGameOver = false;
     time = 0;
+    updateFlagDelay();
     clearInterval(timerInterval);
     initializeGrid();
     generateMines();
     generateEmptySpaces();
-    // do free first click
     if(doFreeClick) freeClick();
     drawGrid();
     title.innerHTML = "mine sweep 💣💯";
@@ -385,6 +388,16 @@ function infiniteLoop() {
   requestAnimationFrame(infiniteLoop);
 }
 
+function updateFlagDelay() {
+  var delay = delayInput.value;
+  if(!isNaN(delay) && delay == parseInt(delay) && delay > 0) {
+    flagDelay = delay;
+    return;
+  }
+  flagDelay = 200;
+  delayInput.value = 200;
+}
+
 // only purpose of this is to prevent right click menu
 function rightClickFunc(e) {
   if(e.button == 2) e.preventDefault();
@@ -400,7 +413,7 @@ function mouseDownFunc(e) {
   if(interval == -1 && e.button == 0) {
     var position = getIndexAtCanvasCoords(getCanvasPos(e));
     if(position != null) {
-      interval = setInterval(placeFlag, 400, position.row, position.column);
+      interval = setInterval(placeFlag, flagDelay, position.row, position.column);
     }
   }
 }
@@ -418,7 +431,7 @@ function touchStartFunc(e) {
   if(interval == -1) {
     var position = getIndexAtCanvasCoords(getCanvasPos(e.changedTouches[0]));
     if(position != null) {
-      interval = setInterval(placeFlag, 400, position.row, position.column);
+      interval = setInterval(placeFlag, flagDelay, position.row, position.column);
     }
   }
 }

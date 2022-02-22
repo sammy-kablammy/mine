@@ -25,7 +25,11 @@
       <br>
       <input class="checkbox" type="checkbox" id="free">free click</input>
       <br>
+      <h3>flag delay: </h3>
+      <input id="flagdelay" value="200"></input>
+      <button id="updateflagdelay" onclick="updateFlagDelay()" class="enter">enter</button>
       <button id="reset" onclick="resetGame()">reset game</button>
+      <br>
       <button id="easy" onclick="setDifficulty(10, 10, 16)" class="difficulty">easy</button>
       <button id="medium" onclick="setDifficulty(20, 20, 50)" class="difficulty">medium</button>
       <button id="hard" onclick="setDifficulty(30, 30, 200)" class="difficulty">hard</button>
@@ -33,9 +37,9 @@
     <canvas id="canv" width=256 height=256></canvas>
 
     <div class="right">
-      <h3><b>things to fix or maybe add</b></h3>
+      <h3><b>recent changes</b></h3>
       <ul>
-        <li>nothing. game is done.</li>
+        <li>flag delay is now customizable</li>
       </ul>
     </div>
 
