@@ -34,11 +34,18 @@ function resetGame() {
   gridColumnCount = columnsInput.value;
   numOfMines = minesInput.value;
   
-  var areNumeric = !isNaN(gridRowCount) && !isNaN(gridColumnCount) && !isNaN(numOfMines);
-  var areInts = gridRowCount == parseInt(gridRowCount) && gridColumnCount == parseInt(gridColumnCount) && numOfMines == parseInt(numOfMines);
-  var arePositive = gridRowCount > 0 && gridColumnCount > 0 && numOfMines > 0;
-  // this section actually resets the game
-  if(areNumeric && areInts && arePositive && numOfMines <= gridRowCount * gridColumnCount - 1) {
+  // check if the user input is valid
+  if(isNaN(gridRowCount) || gridRowCount != parseInt(gridRowCount) || gridRowCount <= 0) {
+    title.innerHTML = "uh oh bucko. that's not a valid row count";
+  }
+  else if(isNaN(gridColumnCount) || gridColumnCount != parseInt(gridColumnCount) || gridColumnCount <= 0) {
+    title.innerHTML = "uh oh bucko. that's not a valid column count";
+  }
+  else if(isNaN(numOfMines) || numOfMines != parseInt(numOfMines) || numOfMines <= 0 || numOfMines > gridRowCount * gridColumnCount - 1) {
+    title.innerHTML = "uh oh bucko. that's not a valid mine count";
+  }
+  else {
+    // everything has passed, so reset the game
     numFlags = 0;
     victoryImage.style = "visibility: hidden";
     loseImage.style = "visibility: hidden";
@@ -57,15 +64,6 @@ function resetGame() {
     if(doFreeClick) freeClick();
     drawGrid();
     title.innerHTML = "mine sweep 💣💯";
-  }
-  else if(gridRowCount <= 0 || isNaN(gridRowCount) || gridRowCount != parseInt(gridRowCount)) {
-    title.innerHTML = "uh oh bucko. that's not a valid row count";
-  }
-  else if(gridColumnCount <= 0 || isNaN(gridColumnCount) || gridColumnCount != parseInt(gridColumnCount)) {
-    title.innerHTML = "uh oh bucko. that's not a valid column count";
-  }
-  else if(numOfMines <= 0 || numOfMines > gridRowCount * gridColumnCount - 1 || isNaN(numOfMines) || numOfMines != parseInt(numOfMines)) {
-    title.innerHTML = "uh oh bucko. that's not a valid mine count";
   }
 }
 
