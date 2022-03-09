@@ -1,3 +1,10 @@
+// script.js handles user input and interfacing with the html file
+
+import * as extra from "./extra.js";
+import * as minesweeper from "./minesweeper.js";
+
+minesweeper.stuff();
+
 var canvas = document.getElementById("canv");
 var ctx = canvas.getContext("2d");
 var rowsInput = document.getElementById("rows");
@@ -165,6 +172,7 @@ function drawGrid() {
 }
 
 // generates mines (duh)
+// has been moved to minesweeper.js
 function generateMines() {
   var minesGenerated = 0;
   while(minesGenerated < numOfMines) {
@@ -270,6 +278,7 @@ function revealSquare(r, c) {
   }
 }
 // place a flag at given row and column
+// kinda moved to minesweeper.js
 function placeFlag(r, c) {
   if(!isGameOver) {
     clearInterval(interval);
@@ -287,6 +296,7 @@ function placeFlag(r, c) {
   }
 }
 // finds an available non-mine square and reveals it
+// kinda moved to minesweeper.js
 function freeClick() {
   var foundIt = false;
   for(var num = 0; num <= 8; num++) {
@@ -330,6 +340,7 @@ function getIndexAtCanvasCoords(position) {
 }
 
 // returns number of mines in 8 blocks around r, c
+// added to minesweeper.js
 function getNearbyMineCount(r, c) {
   var mineCount = 0;
   for(var localR = -1; localR < 2; localR++) {
@@ -345,6 +356,7 @@ function getNearbyMineCount(r, c) {
   return mineCount;
 }
 // returns number of flags in 8 blocks around r, c
+// added to minesweeper.js
 function getNearbyFlagCount(r, c) {
   var localFlagCount = 0;
   for(var localR = -1; localR < 2; localR++) {
@@ -365,6 +377,8 @@ function setDifficulty(r, c, m) {
   columnsInput.value = c;
   minesInput.value = m;
 }
+
+// has been moved to minesweeper.js
 function initializeGrid() {
   for(var r = 0; r < gridRowCount; r++) {
     grid[r] = [];
@@ -440,6 +454,18 @@ function touchEndFunc(e) {
     interval = -1;
   }
 }
+
+document.getElementById("reset").addEventListener("click", resetGame);
+document.getElementById("easy").addEventListener("click", function(){
+  setDifficulty(10, 10, 16);
+});
+document.getElementById("medium").addEventListener("click", function(){
+  setDifficulty(20, 20, 50);
+});
+document.getElementById("hard").addEventListener("click", function(){
+  setDifficulty(30, 30, 200);
+});
+document.getElementById("updateflagdelay").addEventListener("click", updateFlagDelay);
 
 document.addEventListener("contextmenu", rightClickFunc);
 canvas.addEventListener("mousedown", mouseDownFunc);
