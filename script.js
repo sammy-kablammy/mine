@@ -3,7 +3,111 @@
 import * as extra from "./extra.js";
 import * as minesweeper from "./minesweeper.js";
 
+
 minesweeper.stuff();
+
+function startGame() {
+  var rows = 8;
+  var columns = 8;
+  var mines = 12;
+  // MAKE SURE TO HAVE CONDITIONS FOR THE INPUT VALUES AND STUFF
+  var board = new MinesweeperGame(rows, columns, mines);
+}
+
+
+
+function mouseDownFunc(e) {
+  if(e.button == 2) {
+    var position = getIndexAtCoords(e.clientX, e.clientY); // should this be e.screenX and Y ?
+    if(position != null) {
+      placeFlag(position.row, position.column);
+    }
+  }
+  if(interval == -1 && e.button == 0) {
+    var position = getIndexAtCanvasCoords(getCanvasPos(e));
+    if(position != null) {
+      interval = setInterval(placeFlag, flagDelay, position.row, position.column);
+    }
+  }
+}
+function mouseUpFunc(e) {
+  if(e.button == 0) {
+    if(interval != -1) {
+      click(getIndexAtCanvasCoords(getCanvasPos(e)));
+      clearInterval(interval);
+      interval = -1;
+    }
+  }
+}
+
+// returns grid index values (r and c) based on the given cursor position on the webpage
+function getIndexAtCoords(x, y) {
+  var rect = canvas.getBoundingClientRect();
+  // relative coordinates are relative to the canvas instead of relative to the webpage as a whole
+  var relativeX = parseInt(x - rect.left);
+  var relativeY = parseInt(y - rect.top);
+  // now that we have the canvas coords, find the index values
+  for(var r = 0; r < board.rows; r++) {
+    for(var c = 0; c < board.columns; c++) {
+      var withinX = x > c * canvas.width / board.columns && x < (c * canvas.width / board.columns) + squareSize;
+      var withinY = y > r * canvas.height / board.rows && y < (r * canvas.height / board.rows) + squareSize;
+      if(withinX && withinY) {
+        return {
+          row: r,
+          column: c
+        }
+      }
+    }
+  }
+}
+
+
+// move the drawgrid function back here at some point
+
+
+
+
+// converts position on the webpage to its position relative to the canvas
+function getCanvasPos(e) {
+  var rect = canvas.getBoundingClientRect();
+  return {
+    x: parseInt(e.clientX - rect.left),
+    y: parseInt(e.clientY - rect.top)
+  }
+}
+// converts mouse (or touch) position in the canvas to index values in the 2D array
+function getIndexAtCanvasCoords(position) {
+  var x = position.x;
+  var y = position.y;
+  for(var r = 0; r < gridRowCount; r++) {
+    for(var c = 0; c < gridColumnCount; c++) {
+      var withinX = x > c * canvas.width / gridColumnCount && x < (c * canvas.width / gridColumnCount) + squareSize;
+      var withinY = y > r * canvas.height / gridRowCount && y < (r * canvas.height / gridRowCount) + squareSize;
+      if(withinX && withinY) {
+        return {
+          row: r,
+          column: c
+        }
+      }
+    }
+  }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// minesweeper.stuff();
 
 var canvas = document.getElementById("canv");
 var ctx = canvas.getContext("2d");
@@ -65,7 +169,11 @@ function resetGame() {
     time = 0;
     updateFlagDelay();
     clearInterval(timerInterval);
-    initializeGrid();
+
+    // new
+    var board = new MinesweeperGame();
+
+    
     generateMines();
     generateEmptySpaces();
     if(doFreeClick) freeClick();
@@ -87,112 +195,6 @@ function click(position) {
     }
   attemptWin();
   drawGrid();
-  }
-}
-
-// actually converts the values of the grid array into visuals
-function drawGrid() {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  for(var r = 0; r < gridRowCount; r++) {
-    for(var c = 0; c < gridColumnCount; c++) {
-      ctx.beginPath();
-      // draw the covered squares
-      if(grid[r][c].hidden == true) {
-        // draw a blank grey square
-        ctx.rect(c * canvas.width / gridColumnCount, r * canvas.height / gridRowCount, squareSize, squareSize);
-        ctx.fillStyle = "grey";
-        ctx.fill();
-        // draw the flags
-        if(grid[r][c].flagged) {
-          var textOffset = (squareSize - ctx.measureText(grid[r][c].val).width) / 2;
-          ctx.fillStyle = "pink";
-          ctx.rect(c * canvas.width / gridColumnCount, r * canvas.height / gridRowCount, squareSize, squareSize);
-          ctx.fill();
-          ctx.fillStyle = "black";
-          ctx.font = "18px Arial";
-          ctx.fillText("F", (c * canvas.width / gridColumnCount) + textOffset, (r * canvas.height / gridRowCount) + textOffset);
-        }
-      }
-      // draw the uncovered squares
-      else if(!grid[r][c].hidden && !grid[r][c].flagged) {
-        ctx.font = "18px Arial";
-        ctx.textBaseline = "top";
-        // figure out what color the text should be
-        var color;
-        switch(grid[r][c].val) {
-          case 0:
-          color = "#eeeeee"; // to blend in with background color
-          break;
-          case 1:
-          color = "blue";
-          break;
-          case 2:
-          color = "green";
-          break;
-          case 3:
-          color = "red";
-          break;
-          case 4:
-          color = "darkBlue";
-          break;
-          case 5:
-          color = "darkRed";
-          break;
-          case 6:
-          color = "turquoise";
-          break;
-          case 7:
-          color = "black";
-          break;
-          case 8:
-          color = "darkGrey";
-          break;
-          default:
-          color = "purple"; // should never happen
-        }
-        var textOffset = (squareSize - ctx.measureText(grid[r][c].val).width) / 2;
-        ctx.fillStyle = color;
-        ctx.fillText(grid[r][c].val, (c * canvas.width / gridColumnCount) + textOffset, (r * canvas.height / gridRowCount) + textOffset);
-        ctx.fill();
-      }
-      // regardless of visibility, add black outline around the square
-      ctx.rect(c * canvas.width / gridColumnCount, r * canvas.height / gridRowCount, squareSize, squareSize);
-      // if it's a mine (and not hidden and flagged of course), make red THEN draw text
-      if(!grid[r][c].hidden && !grid[r][c].flagged && grid[r][c].val == "M") {
-        ctx.fillStyle = "red";
-        ctx.fill();
-        ctx.fillStyle = "black";
-        ctx.fillText(grid[r][c].val, (c * canvas.width / gridColumnCount) + textOffset, (r * canvas.height / gridRowCount) + textOffset);
-      }
-      ctx.strokeStyle = "black";
-      ctx.stroke();
-      ctx.closePath();
-    }
-  }
-}
-
-// generates mines (duh)
-// has been moved to minesweeper.js
-function generateMines() {
-  var minesGenerated = 0;
-  while(minesGenerated < numOfMines) {
-    var mineRow = Math.floor(Math.random() * gridRowCount);
-    var mineColumn = Math.floor(Math.random() * gridColumnCount);
-    if(grid[mineRow][mineColumn].val != "M") {
-      grid[mineRow][mineColumn].val = "M";
-      minesGenerated++;
-    }
-  }
-}
-// figures out what number should be in each square based on # of mines near it
-function generateEmptySpaces() {
-  for(var r = 0; r < gridRowCount; r++) {
-    for(var c = 0; c < gridColumnCount; c++) {
-      if(grid[r][c].val != "M") {
-        var mineCount = getNearbyMineCount(r, c);
-        grid[r][c].val = mineCount;
-      }
-    }
   }
 }
 
@@ -242,41 +244,6 @@ function attemptWin() {
   }
 }
 
-// reveal the given square; also handles chains of zeroes being revealed
-function revealSquare(r, c) {
-  grid[r][c].hidden = false;
-  // handles clicking on a number to reveal the non-flags around it
-  if(!grid[r][c].flagged && grid[r][c].val != "M") {
-    if(getNearbyMineCount(r, c) <= getNearbyFlagCount(r, c)) {
-      // reveal 8 around r, c
-      for(var localR = -1; localR < 2; localR++) {
-        for(var localC = -1; localC < 2; localC++) {
-          var isInBounds = (r + localR >= 0 && r + localR < gridRowCount && c + localC >= 0 && c + localC < gridColumnCount)
-          if(isInBounds && grid[r + localR][c + localC].hidden && !grid[r + localR][c + localC].flagged) {
-            if(grid[r + localR][c + localC].val == "M") {
-              gameOver();
-            }
-            revealSquare(r + localR, c + localC);
-          }
-        }
-      }
-    }
-  }
-  // handles zero chain shenanigans
-  for(var localR = -1; localR < 2; localR++) {
-    for(var localC = -1; localC < 2; localC++) {
-      var isInBounds = (r + localR >= 0 && r + localR < gridRowCount && c + localC >= 0 && c + localC < gridColumnCount)
-      // if r, c is zero, reveal everything around it
-      if(grid[r][c].val == 0 && isInBounds && grid[r + localR][c + localC].hidden) {
-        revealSquare(r + localR, c + localC);
-      }
-      // if one of the "8 squares around me" is zero, reveal that square
-      else if(isInBounds && grid[r + localR][c + localC].val == 0 && grid[r + localR][c + localC].hidden) {
-        revealSquare(r + localR, c + localC);
-      }
-    }
-  }
-}
 // place a flag at given row and column
 // kinda moved to minesweeper.js
 function placeFlag(r, c) {
@@ -313,83 +280,12 @@ function freeClick() {
   }
 }
 
-// converts mouse (or touch) position on the webpage to its position relative to the canvas
-function getCanvasPos(e) {
-  var rect = canvas.getBoundingClientRect();
-  return {
-    x: parseInt(e.clientX - rect.left),
-    y: parseInt(e.clientY - rect.top)
-  }
-}
-// converts mouse (or touch) position in the canvas to index values in the 2D array
-function getIndexAtCanvasCoords(position) {
-  var x = position.x;
-  var y = position.y;
-  for(var r = 0; r < gridRowCount; r++) {
-    for(var c = 0; c < gridColumnCount; c++) {
-      var withinX = x > c * canvas.width / gridColumnCount && x < (c * canvas.width / gridColumnCount) + squareSize;
-      var withinY = y > r * canvas.height / gridRowCount && y < (r * canvas.height / gridRowCount) + squareSize;
-      if(withinX && withinY) {
-        return {
-          row: r,
-          column: c
-        }
-      }
-    }
-  }
-}
 
-// returns number of mines in 8 blocks around r, c
-// added to minesweeper.js
-function getNearbyMineCount(r, c) {
-  var mineCount = 0;
-  for(var localR = -1; localR < 2; localR++) {
-    for(var localC = -1; localC < 2; localC++) {
-      var isInBounds = (r + localR >= 0 && r + localR < gridRowCount && c + localC >= 0 && c + localC < gridColumnCount)
-      if(isInBounds) {
-        if(grid[r + localR][c + localC].val == "M") {
-          mineCount++;
-        }
-      }
-    }
-  }
-  return mineCount;
-}
-// returns number of flags in 8 blocks around r, c
-// added to minesweeper.js
-function getNearbyFlagCount(r, c) {
-  var localFlagCount = 0;
-  for(var localR = -1; localR < 2; localR++) {
-    for(var localC = -1; localC < 2; localC++) {
-      var isInBounds = (r + localR >= 0 && r + localR < gridRowCount && c + localC >= 0 && c + localC < gridColumnCount)
-      if(isInBounds) {
-        if(grid[r + localR][c + localC].flagged) {
-          localFlagCount++;
-        }
-      }
-    }
-  }
-  return localFlagCount;
-}
 
 function setDifficulty(r, c, m) {
   rowsInput.value = r;
   columnsInput.value = c;
   minesInput.value = m;
-}
-
-// has been moved to minesweeper.js
-function initializeGrid() {
-  for(var r = 0; r < gridRowCount; r++) {
-    grid[r] = [];
-    for(var c = 0; c < gridColumnCount; c++) {
-      grid[r][c] = {
-        val: 0,
-        hidden: true,
-        flagged: false
-      }
-    }
-  }
 }
 
 function timeTick() {
@@ -415,29 +311,7 @@ function rightClickFunc(e) {
   if(e.button == 2) e.preventDefault();
 }
 
-function mouseDownFunc(e) {
-  if(e.button == 2) {
-    var position = getIndexAtCanvasCoords(getCanvasPos(e));
-    if(position != null) {
-      placeFlag(position.row, position.column);
-    }
-  }
-  if(interval == -1 && e.button == 0) {
-    var position = getIndexAtCanvasCoords(getCanvasPos(e));
-    if(position != null) {
-      interval = setInterval(placeFlag, flagDelay, position.row, position.column);
-    }
-  }
-}
-function mouseUpFunc(e) {
-  if(e.button == 0) {
-    if(interval != -1) {
-      click(getIndexAtCanvasCoords(getCanvasPos(e)));
-      clearInterval(interval);
-      interval = -1;
-    }
-  }
-}
+
 
 function touchStartFunc(e) {
   if(interval == -1) {
@@ -455,6 +329,7 @@ function touchEndFunc(e) {
   }
 }
 
+/*
 document.getElementById("reset").addEventListener("click", resetGame);
 document.getElementById("easy").addEventListener("click", function(){
   setDifficulty(10, 10, 16);
@@ -474,3 +349,4 @@ canvas.addEventListener("touchstart", touchStartFunc);
 canvas.addEventListener("touchend", touchEndFunc);
 infiniteLoop();
 resetGame();
+*/
