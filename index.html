@@ -9,26 +9,26 @@
   </head>
 
   <body>
-    <h1 id="title">mine sweep 💣💯</h1>
+    <h1 id="title">Mine sweep 💣💯</h1>
 
     <div class="left">
       <p id="timer">Time: 0s</p>
       <p id="flags">Mines Left: 16</p>
-      <h3>rows: </h3>
+      <h3>Rows: </h3>
       <input id="rows" value="10"></input>
       <br>
-      <h3>columns: </h3>
+      <h3>Columns: </h3>
       <input id="columns" value="10"></input>
       <br>
-      <h3>mines: </h3>
+      <h3>Mines: </h3>
       <input id="mines" value="16"></input>
       <br>
-      <input class="checkbox" type="checkbox" id="free">free click</input>
+      <input class="checkbox" type="checkbox" id="free">Free first click</input>
       <br>
-      <h3>flag delay: </h3>
+      <h3>Flag delay: </h3>
       <input id="flagdelay" value="200"></input>
-      <button id="updateflagdelay" onclick="updateFlagDelay()" class="enter">enter</button>
-      <button id="reset" onclick="resetGame()">reset game</button>
+      <button id="updateflagdelay" onclick="updateFlagDelay()" class="enter">Enter</button>
+      <button id="reset" onclick="resetGame()">Reset Game</button>
       <br>
       <button id="easy" onclick="setDifficulty(10, 10, 16)" class="difficulty">easy</button>
       <button id="medium" onclick="setDifficulty(20, 20, 50)" class="difficulty">medium</button>
@@ -37,7 +37,7 @@
     <canvas id="canv" width=256 height=256></canvas>
 
     <div class="right">
-      <h3><b>recent changes</b></h3>
+      <h3><b>Recent changes</b></h3>
       <ul>
         <li>flag delay is now customizable</li>
       </ul>

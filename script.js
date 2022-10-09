@@ -44,7 +44,7 @@ function resetGame() {
   else if(isNaN(numOfMines) || numOfMines != parseInt(numOfMines) || numOfMines <= 0 || numOfMines > gridRowCount * gridColumnCount - 1) {
     title.innerHTML = "uh oh bucko. that's not a valid mine count";
   }
-  else {
+  else {{}
     // everything has passed, so reset the game
     numFlags = 0;
     victoryImage.style = "visibility: hidden";
